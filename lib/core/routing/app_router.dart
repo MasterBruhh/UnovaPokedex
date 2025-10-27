@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../onboarding/presentation/pages/pokeball_splash_page.dart';
 import '../../onboarding/presentation/pages/main_menu_page.dart';
 import '../../features/pokedex/presentation/pages/pokedex_list_page.dart';
+import '../../features/pokedex/presentation/pages/pokedex_detail_page.dart';
 import 'session_manager.dart';
 
 class _RouteObserver extends NavigatorObserver {
@@ -78,6 +79,16 @@ class AppRouter {
           path: '/pokedex',
           name: 'pokedex',
           builder: (context, state) => const PokedexListPage(),
+        ),
+        GoRoute(
+          path: '/pokedex/:name', // Define una ruta que acepta un parámetro llamado 'name'
+          name: 'pokedex_detail',
+          builder: (context, state) {
+            // 1. Extrae el nombre del Pokémon de la URL.
+            final pokemonName = state.pathParameters['name'];
+            // 2. Crea la página de detalle y le pasa el nombre.
+            return PokedexDetailPage(pokemonName: pokemonName);
+          },
         ),
       ],
     );
