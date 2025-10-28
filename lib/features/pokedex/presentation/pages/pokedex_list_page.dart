@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'dart:async';
 
-// --- Modelos y Enums para Tipos y Regiones ---
+// --- Modelos y Enums (sin cambios) ---
 enum PokeType { normal, fire, water, electric, grass, ice, fighting, poison, ground, flying, psychic, bug, rock, ghost, dragon, dark, steel, fairy }
 enum PokeRegion { kanto, johto, hoenn, sinnoh, unova, kalos, alola, galar, paldea, hisui }
 
-// --- Página Principal de la Pokédex ---
+// --- Página Principal de la Pokédex (con filtros) ---
+
 class PokedexListPage extends StatefulWidget {
   const PokedexListPage({super.key});
   @override
@@ -14,10 +16,18 @@ class PokedexListPage extends StatefulWidget {
 }
 
 class _PokedexListPageState extends State<PokedexListPage> {
-  int _filteredCount = 0;
+  // --- Estado para los filtros ---
+  String _searchText = '';
+  final Set<PokeType> _selectedTypes = {};
+
+  // --- Lista completa y lista filtrada ---
+  List _allPokemons = [];
+  List _filteredPokemons = [];
+
+  // La consulta GraphQL no cambia
   final String _query = """
     query KantoPokedex {
-      pokemon_v2_pokemon(where: {id: {_lte: 151}}, order_by: {id: asc}) {
+      pokemon_v2_pokemon(where: {id: {_lte: 1025}}, order_by: {id: asc}) {
         id
         name
         pokemon_v2_pokemontypes {
@@ -29,11 +39,120 @@ class _PokedexListPageState extends State<PokedexListPage> {
     }
   """;
 
-  void _openFilterSheet() { /* ... tu código ... */ }
+  @override
+  void initState() {
+    super.initState();
+    // Inicializamos la lista filtrada como vacía al principio
+    _filteredPokemons = [];
+  }
+
+  /// Lógica central para aplicar los filtros sobre la lista de Pokémon.
+  void _applyFilters() {
+    List filtered = List.from(_allPokemons);
+
+    // 1. Filtrar por texto de búsqueda
+    if (_searchText.isNotEmpty) {
+      filtered = filtered.where((p) => (p['name'] as String).contains(_searchText.toLowerCase())).toList();
+    }
+
+    // 2. Filtrar por tipos seleccionados
+    if (_selectedTypes.isNotEmpty) {
+      // Los Pokémon tienen como máximo 2 tipos. Si seleccionas más de 2, no habrá coincidencias.
+      if (_selectedTypes.length > 2) {
+        filtered = <dynamic>[];
+      } else {
+        filtered = filtered.where((p) {
+          // Construimos el set de tipos del Pokémon
+          final Set<PokeType> pokemonTypes = (p['pokemon_v2_pokemontypes'] as List)
+              .map((t) => t['pokemon_v2_type']['name'] as String)
+              .map((name) => PokeType.values.firstWhere(
+                (e) => e.name == name,
+            orElse: () => PokeType.normal, // Los nombres de PokeAPI coinciden con el enum, así que este orElse no debería activarse.
+          ))
+              .toSet();
+
+          // AND: el Pokémon debe contener TODOS los tipos seleccionados
+          final bool containsAllSelected = _selectedTypes.every(pokemonTypes.contains);
+
+          return containsAllSelected;
+        }).toList();
+      }
+    }
+    setState(() {
+      _filteredPokemons = filtered;
+    });
+  }
+
+  /// Abre el panel de filtros.
+  void _openFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Permite que el sheet sea más alto
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) {
+        // Usamos StatefulBuilder para que el contenido del sheet pueda actualizar su propio estado
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setSheetState) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Wrap(
+                runSpacing: 16,
+                children: [
+                  const Text('Filtros', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  // Campo de búsqueda
+                  TextField(
+                    onChanged: (value) {
+                      setState(() {
+                        _searchText = value;
+                        _applyFilters();
+                      });
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Buscar por nombre...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                    ),
+                  ),
+                  // Chips de tipos
+                  Wrap(
+                    spacing: 8.0,
+                    runSpacing: 4.0,
+                    children: PokeType.values.map((type) {
+                      final isSelected = _selectedTypes.contains(type);
+                      return FilterChip(
+                        label: Text(type.name[0].toUpperCase() + type.name.substring(1)),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          // Actualiza tanto el estado del sheet como el de la página principal
+                          setSheetState(() {
+                            if (selected) {
+                              _selectedTypes.add(type);
+                            } else {
+                              _selectedTypes.remove(type);
+                            }
+                          });
+                          _applyFilters();
+                        },
+                        selectedColor: typeColor(type).withOpacity(0.8),
+                        checkmarkColor: Colors.white,
+                        labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final topPadding = MediaQuery.of(context).padding.top + 68;
+
     return Scaffold(
       backgroundColor: const Color(0xFF6D4C41),
       body: Stack(
@@ -47,33 +166,29 @@ class _PokedexListPageState extends State<PokedexListPage> {
                 if (result.isLoading) return const Center(child: CircularProgressIndicator(color: Colors.white));
                 if (result.hasException) return Center(child: Text('Error: ${result.exception}', style: const TextStyle(color: Colors.white)));
 
-                final List pokemons = result.data?['pokemon_v2_pokemon'] ?? [];
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted) setState(() => _filteredCount = pokemons.length);
-                });
+                // Guardamos la lista completa la primera vez que llega
+                if (_allPokemons.isEmpty && result.data?['pokemon_v2_pokemon'] != null) {
+                  _allPokemons = result.data!['pokemon_v2_pokemon'];
+                  // Aplicamos los filtros iniciales (que estarán vacíos)
+                  _applyFilters();
+                }
 
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                  itemCount: pokemons.length,
+                  itemCount: _filteredPokemons.length,
                   itemBuilder: (context, index) {
-                    final pokemon = pokemons[index];
+                    final pokemon = _filteredPokemons[index];
                     final int id = pokemon['id'];
                     final String name = pokemon['name'];
                     final List typesData = pokemon['pokemon_v2_pokemontypes'];
-                    final List<PokeType> types = typesData.map((t) {
-                      try {
-                        return PokeType.values.firstWhere((e) => e.name == t['pokemon_v2_type']['name']);
-                      } catch (e) {
-                        return PokeType.normal; // Fallback por si el tipo no está en el enum
-                      }
-                    }).toList();
-
+                    final List<PokeType> types = typesData.map((t) => PokeType.values.firstWhere((e) => e.name == t['pokemon_v2_type']['name'], orElse: () => PokeType.normal)).toList();
+                    final region = regionForDexId(id);
                     return _PokedexBookSpine(
                       id: id,
                       name: name,
                       types: types,
-                      region: PokeRegion.kanto,
+                      region: region,
                       onTap: () => context.push('/pokedex/${Uri.encodeComponent(name)}'),
                     );
                   },
@@ -88,7 +203,7 @@ class _PokedexListPageState extends State<PokedexListPage> {
                 children: [
                   _FrostedIconButton(icon: Icons.arrow_back, onPressed: () => context.pop(), tooltip: 'Volver'),
                   const SizedBox(width: 8),
-                  _CounterPill(count: _filteredCount),
+                  _CounterPill(count: _filteredPokemons.length), // El contador ahora usa la lista filtrada
                   const Spacer(),
                   _FrostedIconButton(icon: Icons.filter_list_rounded, onPressed: _openFilterSheet, tooltip: 'Filtros'),
                 ],
@@ -100,9 +215,21 @@ class _PokedexListPageState extends State<PokedexListPage> {
     );
   }
 }
+PokeRegion regionForDexId(int id) {
+  if (id <= 151) return PokeRegion.kanto;          // Gen I
+  if (id <= 251) return PokeRegion.johto;          // Gen II
+  if (id <= 386) return PokeRegion.hoenn;          // Gen III
+  if (id <= 493) return PokeRegion.sinnoh;         // Gen IV
+  if (id <= 649) return PokeRegion.unova;          // Gen V
+  if (id <= 721) return PokeRegion.kalos;          // Gen VI
+  if (id <= 809) return PokeRegion.alola;          // Gen VII
+  if (id <= 898) return PokeRegion.galar;          // Gen VIII (base)
+  if (id <= 905) return PokeRegion.hisui;          // Gen VIII (Hisui: 899–905)
+  // Resto Gen IX (Paldea)
+  return PokeRegion.paldea;
+}
 
-// --- Widgets de la UI (Copiados y adaptados de tu archivo) ---
-// ... (Todos los widgets como _PokedexBookSpine, _FrostedIconButton, etc. van aquí)
+// --- Widgets de la UI
 class _PokedexBookSpine extends StatelessWidget {
   const _PokedexBookSpine({ required this.id, required this.name, required this.types, required this.region, required this.onTap });
   final int id;
@@ -193,7 +320,7 @@ Color regionColor(PokeRegion r) {
     case PokeRegion.unova: return const Color(0xFF90A4AE);
     case PokeRegion.kalos: return const Color(0xFF42A5F5);
     case PokeRegion.alola: return const Color(0xFFFF7043);
-    case PokeRegion.galar: return const Color(0xFFEC407A);
+    case PokeRegion.galar:  return const Color(0xFFEC407A);
     case PokeRegion.paldea: return const Color(0xFF66BB6A);
     case PokeRegion.hisui: return const Color(0xFF26A69A);
   }
