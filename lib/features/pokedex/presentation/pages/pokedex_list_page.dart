@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'dart:async';
 
 // --- Modelos y Enums (sin cambios) ---
 enum PokeType { normal, fire, water, electric, grass, ice, fighting, poison, ground, flying, psychic, bug, rock, ghost, dragon, dark, steel, fairy }
@@ -19,6 +18,7 @@ class _PokedexListPageState extends State<PokedexListPage> {
   // --- Estado para los filtros ---
   String _searchText = '';
   final Set<PokeType> _selectedTypes = {};
+  final Set<PokeRegion> _selectedRegions = {}; //regiones seleccionadas
 
   // --- Lista completa y lista filtrada ---
   List _allPokemons = [];
@@ -78,6 +78,16 @@ class _PokedexListPageState extends State<PokedexListPage> {
         }).toList();
       }
     }
+
+    // 3. Filtrar por regiones seleccionadas
+    if (_selectedRegions.isNotEmpty) {
+      filtered = filtered.where((p) {
+        final int id = p['id'] as int;
+        final region = regionForDexId(id);
+        return _selectedRegions.contains(region);
+      }).toList();
+    }
+
     setState(() {
       _filteredPokemons = filtered;
     });
@@ -134,7 +144,35 @@ class _PokedexListPageState extends State<PokedexListPage> {
                           });
                           _applyFilters();
                         },
-                        selectedColor: typeColor(type).withOpacity(0.8),
+                        selectedColor: typeColor(type).withValues(alpha: 0.8),
+                        checkmarkColor: Colors.white,
+                        labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
+                      );
+                    }).toList(),
+                  ),
+
+                  const SizedBox(height: 8),
+                  const Text('Regiones', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  // Chips de regiones
+                  Wrap(
+                    spacing: 8.0,
+                    runSpacing: 4.0,
+                    children: PokeRegion.values.map((region) {
+                      final isSelected = _selectedRegions.contains(region);
+                      return FilterChip(
+                        label: Text(region.name[0].toUpperCase() + region.name.substring(1)),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setSheetState(() {
+                            if (selected) {
+                              _selectedRegions.add(region);
+                            } else {
+                              _selectedRegions.remove(region);
+                            }
+                          });
+                          _applyFilters();
+                        },
+                        selectedColor: regionColor(region).withValues(alpha: 0.85),
                         checkmarkColor: Colors.white,
                         labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
                       );
@@ -169,8 +207,11 @@ class _PokedexListPageState extends State<PokedexListPage> {
                 // Guardamos la lista completa la primera vez que llega
                 if (_allPokemons.isEmpty && result.data?['pokemon_v2_pokemon'] != null) {
                   _allPokemons = result.data!['pokemon_v2_pokemon'];
-                  // Aplicamos los filtros iniciales (que estarán vacíos)
-                  _applyFilters();
+                  // Actualización de filtros fuera del ciclo de build del Query
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted) return;
+                    _applyFilters();
+                  });
                 }
 
                 return ListView.builder(
@@ -332,7 +373,7 @@ class _FrostedIconButton extends StatelessWidget {
   final String? tooltip;
   @override
   Widget build(BuildContext context) {
-    final bg = Colors.black.withOpacity(0.20);
+    final bg = Colors.black.withValues(alpha: 0.20);
     return Tooltip(
       message: tooltip ?? '',
       child: Material(
@@ -355,7 +396,7 @@ class _CounterPill extends StatelessWidget {
   final int count;
   @override
   Widget build(BuildContext context) {
-    final bg = Colors.black.withOpacity(0.20);
+    final bg = Colors.black.withValues(alpha: 0.20);
     return Container(
       decoration: ShapeDecoration(color: bg, shape: const StadiumBorder()),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),

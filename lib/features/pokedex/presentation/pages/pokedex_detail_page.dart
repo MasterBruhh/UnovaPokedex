@@ -166,6 +166,12 @@ class PokedexDetailPage extends StatelessWidget {
 
                 final List evolutions = pokemon['pokemon_v2_pokemonspecy']?['pokemon_v2_evolutionchain']?['pokemon_v2_pokemonspecies'] ?? [];
                 final List moves = pokemon['pokemon_v2_pokemonmoves'] ?? [];
+                // Garantiza orden ascendente por nivel
+                moves.sort((a, b) {
+                  final int la = (a['level'] ?? 0) as int;
+                  final int lb = (b['level'] ?? 0) as int;
+                  return la.compareTo(lb);
+                });
 
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
@@ -469,7 +475,7 @@ class _FrostedIconButton extends StatelessWidget {
             child: Icon(icon, color: Colors.white),
           ),
         ),
-      ),
+      )
     );
   }
 }

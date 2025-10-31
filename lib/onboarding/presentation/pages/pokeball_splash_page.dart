@@ -50,6 +50,7 @@ class _PokeballSplashPageState extends State<PokeballSplashPage> {
             child: PokeballOpening(
               size: 200,
               onOpened: _handleOpened,
+              sfxVolume: 0.35, // volumen reducido
             ),
           ),
           Positioned(
