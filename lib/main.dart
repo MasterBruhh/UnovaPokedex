@@ -5,22 +5,19 @@ import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/audio/audio_controller.dart';
 import 'core/env/env.dart';
+import 'core/graphql/graphql_client.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await initHiveForFlutter();
 
-  final httpLink = HttpLink('https://beta.pokeapi.co/graphql/v1beta');
-
-  final client = ValueNotifier(
-    GraphQLClient(
-      link: httpLink,
-      cache: GraphQLCache(store: HiveStore()),
-    ),
-  );
-
+  // Cargar variables de entorno (si existen)
   await Env.load();
+
+  // Construye el cliente
+  final client = GraphQLService.initClient();
+
   await AudioController.instance.init();
 
   final router = AppRouter.build();

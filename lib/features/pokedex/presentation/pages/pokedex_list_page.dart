@@ -202,7 +202,31 @@ class _PokedexListPageState extends State<PokedexListPage> {
               options: QueryOptions(document: gql(_query)),
               builder: (QueryResult result, { VoidCallback? refetch, FetchMore? fetchMore }) {
                 if (result.isLoading) return const Center(child: CircularProgressIndicator(color: Colors.white));
-                if (result.hasException) return Center(child: Text('Error: ${result.exception}', style: const TextStyle(color: Colors.white)));
+                if (result.hasException) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'No se pudo cargar la Pokédex. Revisa tu conexión a internet y vuelve a intentar.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton.icon(
+                            onPressed: refetch,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Reintentar'),
+                          ),
+                          const SizedBox(height: 12),
+                          Text('${result.exception}', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                  );
+                }
 
                 // Guardamos la lista completa la primera vez que llega
                 if (_allPokemons.isEmpty && result.data?['pokemon_v2_pokemon'] != null) {
@@ -387,7 +411,7 @@ class _FrostedIconButton extends StatelessWidget {
             child: Icon(icon, color: Colors.white),
           ),
         ),
-      ),
+      )
     );
   }
 }

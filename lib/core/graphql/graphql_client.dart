@@ -3,11 +3,10 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../env/env.dart';
 
 class GraphQLService {
-  /// Inicializa un GraphQLClient con HttpLink y AuthLink opcional (Bearer).
-  /// Usa InMemoryStore para simplicidad (sin Hive en esta fase).
+  // Inicializa un GraphQLClient con HttpLink y AuthLink opcional (Bearer).
   static ValueNotifier<GraphQLClient> initClient() {
     final httpLink = HttpLink(
-      Env.graphqlEndpoint ?? 'https://example.com/graphql', // placeholder
+      Env.graphqlEndpoint ?? 'https://beta.pokeapi.co/graphql/v1beta2',
     );
 
     Link link = httpLink;
@@ -21,7 +20,7 @@ class GraphQLService {
       link = authLink.concat(httpLink);
     }
 
-    final cache = GraphQLCache(store: InMemoryStore());
+    final cache = GraphQLCache(store: HiveStore());
 
     return ValueNotifier(
       GraphQLClient(
