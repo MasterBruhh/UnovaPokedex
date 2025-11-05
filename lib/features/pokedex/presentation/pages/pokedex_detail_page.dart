@@ -68,10 +68,10 @@ Color typeColor(PokeType t) {
 }
 
 /// ------------------------------------------------------------
-/// Evoluciones: modelo y helpers (TOP-LEVEL, fuera de cualquier clase)
+/// Evoluciones: modelo y helpers
 /// ------------------------------------------------------------
 class _Species {
-  final int id;
+  final int id; // species id
   final String name;
   final int? parentId; // evolves_from_species_id
   const _Species({required this.id, required this.name, this.parentId});
@@ -109,7 +109,6 @@ List<_Species> preChain(int currentId, Map<int, _Species> map) {
 
 /// Para cada hijo directo del actual, sigue linealmente mientras cada nodo tenga
 /// exactamente 1 hijo; si hay 0 o >1, se detiene esa cadena.
-/// Así se representan ramas “individuales” y solo se ven secuencias cuando son lineales.
 List<List<_Species>> forwardChains(int currentId, Map<int, _Species> map) {
   final result = <List<_Species>>[];
   final firstLevel = childrenOf(currentId, map);
@@ -140,9 +139,7 @@ class PokedexDetailPage extends StatelessWidget {
   final String? pokemonName;
   final int? pokemonId;
 
-  // Consulta extendida:
-  // - Evoluciones con evolves_from_species_id para reconstruir árbol.
-  // - Movimientos ordenados por nivel (deduplicamos por move_id en cliente).
+  // Consulta: añadimos "id" en pokemon_v2_pokemonspecy para usar species_id en el árbol.
   String get _query => r'''
     query PokemonDetails($where: pokemon_v2_pokemon_bool_exp!) {
       pokemon_v2_pokemon(where: $where, limit: 1) {
@@ -166,6 +163,7 @@ class PokedexDetailPage extends StatelessWidget {
         }
 
         pokemon_v2_pokemonspecy {
+          id
           pokemon_v2_pokemonspeciesflavortexts(
             where: {language_id: {_eq: 7}}
             order_by: {version_id: desc}
@@ -239,12 +237,13 @@ class PokedexDetailPage extends StatelessWidget {
                   );
                 }
 
-                final pokemon = (result.data?['pokemon_v2_pokemon'] as List?)?.first;
-                if (pokemon == null) {
+                final pokemonList = (result.data?['pokemon_v2_pokemon'] as List?) ?? const [];
+                if (pokemonList.isEmpty) {
                   return const Center(child: Text('Pokémon no encontrado', style: TextStyle(color: Colors.white)));
                 }
+                final pokemon = pokemonList.first as Map<String, dynamic>;
 
-                // Datos básicos
+                // Datos básicos (pokemon)
                 final int id = pokemon['id'] as int;
                 final String name = _titleCase(pokemon['name'] as String);
                 final double height = (pokemon['height'] ?? 0).toDouble();
@@ -260,30 +259,36 @@ class PokedexDetailPage extends StatelessWidget {
 
                 // Habilidades y stats
                 final abilities = pokemon['pokemon_v2_pokemonabilities'] as List? ?? [];
-                final stats = pokemon['pokemon_v2_pokemonstats'] as List? ?? [];
+                final stats = (pokemon['pokemon_v2_pokemonstats'] as List?) ?? const [];
 
-                // Descripción
-                final flavorText = (pokemon['pokemon_v2_pokemonspecy']?['pokemon_v2_pokemonspeciesflavortexts'] as List?)
-                    ?.first?['flavor_text'] as String? ??
-                    '';
-                final description = flavorText.replaceAll('\n', ' ').replaceAll('\f', ' ');
+                // Especie + descripción (SEGURA, sin .first a ciegas)
+                final spec = (pokemon['pokemon_v2_pokemonspecy'] as Map<String, dynamic>?) ?? const {};
+                final currentSpeciesId = spec['id'] as int? ?? id; // fallback
 
-                // Evoluciones (árbol a partir de evolves_from_species_id)
-                final speciesRaw =
-                    pokemon['pokemon_v2_pokemonspecy']?['pokemon_v2_evolutionchain']?['pokemon_v2_pokemonspecies']
-                    as List? ??
-                        [];
+                final flavors = (spec['pokemon_v2_pokemonspeciesflavortexts'] as List?) ?? const [];
+                String description = '';
+                if (flavors.isNotEmpty) {
+                  final firstNonEmpty = flavors
+                      .cast<Map<String, dynamic>>()
+                      .map((f) => (f['flavor_text'] as String?)?.trim() ?? '')
+                      .firstWhere((t) => t.isNotEmpty, orElse: () => '');
+                  description = firstNonEmpty.replaceAll('\n', ' ').replaceAll('\f', ' ');
+                }
+
+                // Evoluciones (usar species_id, NO pokemon.id)
+                final speciesRaw = (spec['pokemon_v2_evolutionchain']?['pokemon_v2_pokemonspecies'] as List?) ?? const [];
                 final speciesMap = speciesMapFromRaw(speciesRaw);
-                final pre = preChain(id, speciesMap); // raíz → … → actual
-                final forward = forwardChains(id, speciesMap); // cadenas individuales desde el actual
+                final pre = speciesMap.isEmpty ? const <_Species>[] : preChain(currentSpeciesId, speciesMap);
+                final forward = speciesMap.isEmpty ? const <List<_Species>>[] : forwardChains(currentSpeciesId, speciesMap);
 
-                // Movimientos: ya vienen por nivel asc, deduplicamos por move_id manteniendo el primero
-                final rawMoves = (pokemon['pokemon_v2_pokemonmoves'] as List?) ?? [];
+                // Movimientos: ya vienen ordenados, deduplicamos por move_id
+                final rawMoves = (pokemon['pokemon_v2_pokemonmoves'] as List?) ?? const [];
                 final seen = <int>{};
                 final moves = <Map<String, dynamic>>[];
                 for (final m in rawMoves) {
-                  final mid = m['move_id'] as int;
-                  if (seen.add(mid)) moves.add(m as Map<String, dynamic>);
+                  final mid = (m['move_id'] as int?) ?? -1;
+                  if (mid == -1) continue;
+                  if (seen.add(mid)) moves.add((m as Map).cast<String, dynamic>());
                 }
 
                 return SingleChildScrollView(
@@ -354,8 +359,7 @@ class PokedexDetailPage extends StatelessWidget {
                       if (description.isNotEmpty)
                         _InfoCard(
                           title: 'Descripción',
-                          child: Text(description,
-                              style: const TextStyle(color: Colors.white, height: 1.5)),
+                          child: Text(description, style: const TextStyle(color: Colors.white, height: 1.5)),
                         ),
 
                       const SizedBox(height: 16),
@@ -366,8 +370,8 @@ class PokedexDetailPage extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: abilities.map((a) {
-                            final an = ((a['pokemon_v2_ability']?['name'] as String?) ?? '')
-                                .replaceAll('-', ' ');
+                            final an =
+                            ((a['pokemon_v2_ability']?['name'] as String?) ?? '').replaceAll('-', ' ');
                             final hidden = a['is_hidden'] == true;
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -393,20 +397,17 @@ class PokedexDetailPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (pre.length > 1) ...[
-                                const Text('Pre-evoluciones',
-                                    style: TextStyle(color: Colors.white70)),
+                                const Text('Pre-evoluciones', style: TextStyle(color: Colors.white70)),
                                 const SizedBox(height: 8),
                                 _EvolutionChainRow(
                                   chain: pre,
-                                  currentId: id,
+                                  currentId: currentSpeciesId,
                                   spriteUrl: _spriteUrl,
-                                  onTapName: (n) =>
-                                      context.push('/pokedex/${Uri.encodeComponent(n)}'),
+                                  onTapName: (n) => context.push('/pokedex/${Uri.encodeComponent(n)}'),
                                 ),
                                 const SizedBox(height: 12),
                               ],
-                              const Text('Evoluciones posibles',
-                                  style: TextStyle(color: Colors.white70)),
+                              const Text('Evoluciones posibles', style: TextStyle(color: Colors.white70)),
                               const SizedBox(height: 8),
                               SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
@@ -415,13 +416,12 @@ class PokedexDetailPage extends StatelessWidget {
                                     for (final chain in forward) ...[
                                       _EvolutionChainRow(
                                         chain: [
-                                          if (speciesMap[id] != null) speciesMap[id]!,
+                                          if (speciesMap[currentSpeciesId] != null) speciesMap[currentSpeciesId]!,
                                           ...chain
                                         ],
-                                        currentId: id,
+                                        currentId: currentSpeciesId,
                                         spriteUrl: _spriteUrl,
-                                        onTapName: (n) => context
-                                            .push('/pokedex/${Uri.encodeComponent(n)}'),
+                                        onTapName: (n) => context.push('/pokedex/${Uri.encodeComponent(n)}'),
                                       ),
                                       const SizedBox(width: 16),
                                     ],
@@ -444,14 +444,12 @@ class PokedexDetailPage extends StatelessWidget {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: moves.length,
-                          separatorBuilder: (_, __) =>
-                          const Divider(color: Colors.white12, height: 8),
+                          separatorBuilder: (_, __) => const Divider(color: Colors.white12, height: 8),
                           itemBuilder: (context, index) {
                             final m = moves[index];
                             final int level = (m['level'] ?? 0) as int;
                             final String moveName = _titleCase(
-                                ((m['pokemon_v2_move']?['name'] as String?) ?? '')
-                                    .replaceAll('-', ' '));
+                                ((m['pokemon_v2_move']?['name'] as String?) ?? '').replaceAll('-', ' '));
                             return ListTile(
                               dense: true,
                               contentPadding: EdgeInsets.zero,
@@ -459,12 +457,9 @@ class PokedexDetailPage extends StatelessWidget {
                                 width: 56,
                                 child: Text('Nv. $level',
                                     style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold)),
+                                        color: Colors.white, fontWeight: FontWeight.bold)),
                               ),
-                              title: Text(moveName,
-                                  style:
-                                  const TextStyle(color: Colors.white)),
+                              title: Text(moveName, style: const TextStyle(color: Colors.white)),
                             );
                           },
                         ),
@@ -481,23 +476,14 @@ class PokedexDetailPage extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
               child: Row(
                 children: [
-                  _FrostedIconButton(
-                      icon: Icons.arrow_back,
-                      onPressed: () => context.pop(),
-                      tooltip: 'Volver'),
+                  _FrostedIconButton(icon: Icons.arrow_back, onPressed: () => context.pop(), tooltip: 'Volver'),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Container(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: ShapeDecoration(
-                          color: Colors.black.withOpacity(0.2),
-                          shape: const StadiumBorder()),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: ShapeDecoration(color: Colors.black.withOpacity(0.2), shape: const StadiumBorder()),
                       child: Text(displayName,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold),
+                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                           overflow: TextOverflow.ellipsis),
                     ),
                   ),
@@ -523,7 +509,7 @@ class _EvolutionChainRow extends StatelessWidget {
   });
 
   final List<_Species> chain;
-  final int currentId;
+  final int currentId; // species id actual
   final String Function(int) spriteUrl;
   final void Function(String name) onTapName;
 
@@ -549,10 +535,9 @@ class _EvolutionChainRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Image.network(
-                  spriteUrl(node.id),
+                  spriteUrl(node.id), // usa id de especie (coincide con form por defecto en la mayoría)
                   height: 56,
-                  errorBuilder: (c, e, s) =>
-                  const Icon(Icons.catching_pokemon, color: Colors.white54),
+                  errorBuilder: (c, e, s) => const Icon(Icons.catching_pokemon, color: Colors.white54),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -587,8 +572,7 @@ class _InfoCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(title,
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             const Divider(color: Colors.white30, height: 24),
             child,
           ],
@@ -619,13 +603,15 @@ class _StatsList extends StatelessWidget {
       if (v > maxStat) maxStat = v;
     }
 
+    final list = stats.cast<Map<String, dynamic>>();
+
     return Column(
       children: order.entries.map((entry) {
-        final s = stats.firstWhere(
+        final s = list.firstWhere(
               (e) => (e['pokemon_v2_stat']?['name'] as String?) == entry.key,
-          orElse: () => null,
+          orElse: () => const {},
         );
-        if (s == null) return const SizedBox.shrink();
+        if (s.isEmpty) return const SizedBox.shrink();
         final int value = (s['base_stat'] ?? 0) as int;
         final ratio = (value / maxStat).clamp(0.0, 1.0);
         final barColor = value > maxStat * 0.6
@@ -638,10 +624,7 @@ class _StatsList extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: Row(
             children: [
-              SizedBox(
-                  width: 92,
-                  child:
-                  Text(entry.value, style: const TextStyle(color: Colors.white70))),
+              SizedBox(width: 92, child: Text(entry.value, style: const TextStyle(color: Colors.white70))),
               Expanded(
                 child: LinearProgressIndicator(
                   value: ratio,
@@ -654,8 +637,7 @@ class _StatsList extends StatelessWidget {
                 width: 44,
                 child: Text('$value',
                     textAlign: TextAlign.right,
-                    style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -682,8 +664,7 @@ class _FrostedIconButton extends StatelessWidget {
           onTap: onPressed,
           customBorder: const StadiumBorder(),
           child: Container(
-            decoration:
-            ShapeDecoration(color: bg, shape: const StadiumBorder()),
+            decoration: ShapeDecoration(color: bg, shape: const StadiumBorder()),
             padding: const EdgeInsets.all(10),
             child: Icon(icon, color: Colors.white),
           ),
@@ -721,8 +702,7 @@ class _WoodGrainPainter extends CustomPainter {
       canvas.drawPath(
         Path()
           ..moveTo(x, 0)
-          ..cubicTo(
-              x + 15, size.height * 0.25, x - 10, size.height * 0.6, x + 10, size.height)
+          ..cubicTo(x + 15, size.height * 0.25, x - 10, size.height * 0.6, x + 10, size.height)
           ..lineTo(x + 20, size.height)
           ..cubicTo(x + 35, size.height * 0.65, x + 10, size.height * 0.3, x + 30, 0),
         paint..color = Colors.brown.shade300,
