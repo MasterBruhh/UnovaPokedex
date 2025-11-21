@@ -7,10 +7,12 @@ class PokeballOpening extends StatefulWidget {
     super.key,
     this.size = 180,
     required this.onOpened,
+    this.sfxVolume = 0.4, // volumen por defecto más bajo
   });
 
   final double size;
   final VoidCallback onOpened;
+  final double sfxVolume; // 0.0 a 1.0
 
   @override
   State<PokeballOpening> createState() => _PokeballOpeningState();
@@ -37,8 +39,8 @@ class _PokeballOpeningState extends State<PokeballOpening>
   Future<void> _open() async {
     if (_controller.isAnimating) return;
 
-    // Play SFX via global controller (won't cut off on navigation)
-    AudioController.instance.playSfxAsset('audio/pokeball_sound.mp3', volume: 1.0);
+    final v = widget.sfxVolume.clamp(0.0, 1.0);
+    AudioController.instance.playSfxAsset('audio/pokeball_sound.mp3', volume: v);
 
     await _controller.forward();
     widget.onOpened();
