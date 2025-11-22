@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/audio/audio_controller.dart';
+import '../../../../core/config/app_constants.dart';
 import '../widgets/pokeball_opening.dart';
-import '../../../core/audio/audio_controller.dart';
 
+/// Pantalla de splash con animación de apertura de Pokéball
 class PokeballSplashPage extends StatefulWidget {
   const PokeballSplashPage({super.key});
 
@@ -16,12 +18,13 @@ class _PokeballSplashPageState extends State<PokeballSplashPage> {
   @override
   void initState() {
     super.initState();
-    // Pre-carga del SFX para garantizar reproducción inmediata en dispositivo real.
-    Future.microtask(() => AudioController.instance.preloadSfxAsset('audio/pokeball_sound.mp3'));
+    // Precargar SFX para reproducción instantánea en dispositivos reales
+    Future.microtask(() => AudioController.instance
+        .preloadSfxAsset(AppConstants.pokeballSfxPath));
   }
 
   Future<void> _handleOpened() async {
-    // Pequeña pausa después de la animación antes de navegar
+    // Pequeño retraso después de la animación antes de navegar
     await Future.delayed(const Duration(milliseconds: 50));
     if (!mounted) return;
     context.goNamed('menu');
@@ -35,6 +38,7 @@ class _PokeballSplashPageState extends State<PokeballSplashPage> {
       body: Stack(
         alignment: Alignment.center,
         children: [
+          // Gradiente de fondo
           const Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -46,13 +50,17 @@ class _PokeballSplashPageState extends State<PokeballSplashPage> {
               ),
             ),
           ),
+
+          // Animación de Pokéball
           Center(
             child: PokeballOpening(
               size: 200,
               onOpened: _handleOpened,
-              sfxVolume: 0.35, // volumen reducido
+              sfxVolume: 0.35,
             ),
           ),
+
+          // Texto de pista
           Positioned(
             bottom: 48,
             child: AnimatedOpacity(
@@ -63,7 +71,7 @@ class _PokeballSplashPageState extends State<PokeballSplashPage> {
                 child: Text(
                   'Toca la Pokéball',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
                   ),
                 ),
               ),
@@ -74,3 +82,4 @@ class _PokeballSplashPageState extends State<PokeballSplashPage> {
     );
   }
 }
+

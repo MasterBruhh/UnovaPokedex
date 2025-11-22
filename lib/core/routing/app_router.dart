@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../onboarding/presentation/pages/pokeball_splash_page.dart';
-import '../../onboarding/presentation/pages/main_menu_page.dart';
+import '../../features/onboarding/presentation/pages/pokeball_splash_page.dart';
+import '../../features/onboarding/presentation/pages/main_menu_page.dart';
 import '../../features/pokedex/presentation/pages/pokedex_list_page.dart';
 import '../../features/pokedex/presentation/pages/pokedex_detail_page.dart';
 import 'session_manager.dart';
 
+/// Observador de rutas para rastrear la navegación
 class _RouteObserver extends NavigatorObserver {
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
@@ -35,23 +36,29 @@ class _RouteObserver extends NavigatorObserver {
   }
 
   String? _nameFromRoute(Route<dynamic>? route) {
-    if (route == null) return null;
-    final loc = route.settings.name;
-    return loc;
+    return route?.settings.name;
   }
 }
 
+/// Configuración del enrutador de la aplicación
 class AppRouter {
+  // Constructor privado para prevenir instanciación
+  AppRouter._();
+
+  /// Construye y devuelve la instancia de GoRouter
   static GoRouter build({String initialLocation = '/'}) {
     return GoRouter(
       initialLocation: initialLocation,
       observers: [_RouteObserver()],
       routes: <RouteBase>[
+        // Pantalla de splash
         GoRoute(
           path: '/',
           name: 'splash',
           builder: (context, state) => const PokeballSplashPage(),
         ),
+
+        // Menú principal
         GoRoute(
           path: '/menu',
           name: 'menu',
@@ -75,18 +82,20 @@ class AppRouter {
             },
           ),
         ),
+
+        // Lista de pokédex
         GoRoute(
           path: '/pokedex',
           name: 'pokedex',
           builder: (context, state) => const PokedexListPage(),
         ),
+
+        // Detalle de pokédex por nombre
         GoRoute(
-          path: '/pokedex/:name', // Define una ruta que acepta un parámetro llamado 'name'
+          path: '/pokedex/:name',
           name: 'pokedex_detail',
           builder: (context, state) {
-            // 1. Extrae el nombre del Pokémon de la URL.
             final pokemonName = state.pathParameters['name'];
-            // 2. Crea la página de detalle y le pasa el nombre.
             return PokedexDetailPage(pokemonName: pokemonName);
           },
         ),

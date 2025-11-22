@@ -1,18 +1,19 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../../core/audio/audio_controller.dart';
+import '../../../../core/audio/audio_controller.dart';
 
+/// Widget que muestra una Pokéball animada que se abre al tocarla
 class PokeballOpening extends StatefulWidget {
   const PokeballOpening({
     super.key,
     this.size = 180,
     required this.onOpened,
-    this.sfxVolume = 0.4, // volumen por defecto más bajo
+    this.sfxVolume = 0.4,
   });
 
   final double size;
   final VoidCallback onOpened;
-  final double sfxVolume; // 0.0 a 1.0
+  final double sfxVolume;
 
   @override
   State<PokeballOpening> createState() => _PokeballOpeningState();
@@ -21,7 +22,7 @@ class PokeballOpening extends StatefulWidget {
 class _PokeballOpeningState extends State<PokeballOpening>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _progress; // 0..1 open
+  late final Animation<double> _progress;
 
   @override
   void initState() {
@@ -39,8 +40,11 @@ class _PokeballOpeningState extends State<PokeballOpening>
   Future<void> _open() async {
     if (_controller.isAnimating) return;
 
-    final v = widget.sfxVolume.clamp(0.0, 1.0);
-    AudioController.instance.playSfxAsset('audio/pokeball_sound.mp3', volume: v);
+    final volume = widget.sfxVolume.clamp(0.0, 1.0);
+    AudioController.instance.playSfxAsset(
+      'audio/pokeball_sound.mp3',
+      volume: volume,
+    );
 
     await _controller.forward();
     widget.onOpened();
@@ -71,9 +75,11 @@ class _PokeballOpeningState extends State<PokeballOpening>
   }
 }
 
+/// Pintor personalizado para la animación de la Pokéball
 class _PokeballPainter extends CustomPainter {
   _PokeballPainter({required this.progress});
-  final double progress; // 0.0 cerrado, 1.0 abierto
+
+  final double progress;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -92,25 +98,22 @@ class _PokeballPainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round
       ..strokeCap = StrokeCap.round;
 
-    // Curvas: separación suave sin rotación
+    // Curva de apertura suave
     final sepCurve = Curves.easeInOutCubic.transform(progress);
-
-    // Separación vertical: cuánto sube la tapa y baja la base
     final separation = radius * 0.55 * sepCurve;
 
-    // Sombra sutil para profundidad bajo cada mitad
+    // Dibujar sombras
     void drawShadowAt(Offset c) {
       final shadowPaint = Paint()
-        ..color = Colors.black.withValues(alpha: 0.10)
+        ..color = Colors.black.withOpacity(0.10)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
       canvas.drawCircle(c, radius * 0.98, shadowPaint);
     }
 
-    // Sombras (ligeramente hacia su dirección de movimiento)
-    drawShadowAt(center.translate(0, separation * 0.25)); // base
-    drawShadowAt(center.translate(0, -separation * 0.15)); // tapa
+    drawShadowAt(center.translate(0, separation * 0.25));
+    drawShadowAt(center.translate(0, -separation * 0.15));
 
-    // Prepara paths de semicírculos en coordenadas locales (origen en 0,0)
+    // Preparar paths de semicírculo
     final circleRect = Rect.fromCircle(center: Offset.zero, radius: radius);
     final topPath = Path()
       ..moveTo(0, 0)
@@ -121,7 +124,7 @@ class _PokeballPainter extends CustomPainter {
       ..addArc(circleRect, 0, math.pi)
       ..close();
 
-    // Parte superior (tapa roja + contorno)
+    // Mitad superior (roja)
     canvas.save();
     canvas.translate(center.dx, center.dy - separation);
     canvas.save();
@@ -132,7 +135,7 @@ class _PokeballPainter extends CustomPainter {
     canvas.drawPath(topArc, paintStroke);
     canvas.restore();
 
-    // Parte inferior (base blanca + contorno)
+    // Mitad inferior (blanca)
     canvas.save();
     canvas.translate(center.dx, center.dy + separation);
     canvas.save();
@@ -143,12 +146,12 @@ class _PokeballPainter extends CustomPainter {
     canvas.drawPath(bottomArc, paintStroke);
     canvas.restore();
 
-    // Banda central (se atenúa rápido al abrir)
+    // Banda central
     final bandFade = (1.0 - (progress * 1.6)).clamp(0.0, 1.0);
     final bandHeight = radius * 0.18 * (0.9 + 0.1 * (1 - progress));
     if (bandFade > 0.0) {
       final bandPaint = Paint()
-        ..color = black.withValues(alpha: 0.85 * bandFade)
+        ..color = black.withOpacity(0.85 * bandFade)
         ..style = PaintingStyle.fill;
       final bandRect = Rect.fromCenter(
         center: center,
@@ -161,24 +164,22 @@ class _PokeballPainter extends CustomPainter {
       );
     }
 
-    // Botón central (se mueve con la tapa)
+    // Botón central
     final extraLift = radius * 0.06 * Curves.easeOut.transform(progress);
     final buttonCenter = center.translate(0, -separation - extraLift);
-
-    // Pop sutil al iniciar (escala ligeramente mayor al comienzo y normal al abrir)
     final popScale = 1.0 + 0.08 * (1.0 - Curves.easeOut.transform(progress));
     final buttonR = radius * 0.26 * popScale;
 
-    // Halo sutil del botón
+    // Halo del botón
     final haloAlpha = (1 - progress) * 0.6;
     if (haloAlpha > 0) {
       final haloPaint = Paint()
-        ..color = Colors.white.withValues(alpha: haloAlpha)
+        ..color = Colors.white.withOpacity(haloAlpha)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
       canvas.drawCircle(buttonCenter, buttonR * 1.05, haloPaint);
     }
 
-    // Botón (relleno + contorno)
+    // Botón
     canvas.drawCircle(buttonCenter, buttonR, Paint()..color = Colors.white);
     canvas.drawCircle(buttonCenter, buttonR, paintStroke);
   }
@@ -187,3 +188,4 @@ class _PokeballPainter extends CustomPainter {
   bool shouldRepaint(_PokeballPainter oldDelegate) =>
       oldDelegate.progress != progress;
 }
+
