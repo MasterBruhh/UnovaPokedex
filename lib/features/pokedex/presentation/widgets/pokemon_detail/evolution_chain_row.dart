@@ -35,8 +35,12 @@ class EvolutionChainRow extends StatelessWidget {
           onTap: () => onTapSpecies(node.name),
           child: Column(
             children: [
+              // CORRECCIÓN: Usar un tag único combinando un prefijo con el ID.
+              // Si este widget se usa en múltiples lugares, considera pasar un 'tagPrefix'
+              // como parámetro al constructor.
+              // Aquí usamos 'evolution-species-' para diferenciarlo de otros Heroes.
               Hero(
-                tag: 'species-${node.id}',
+                tag: 'evolution-species-${node.id}',
                 child: CircleAvatar(
                   backgroundColor: Colors.white24,
                   radius: 36,
@@ -62,4 +66,3 @@ class EvolutionChainRow extends StatelessWidget {
     );
   }
 }
-

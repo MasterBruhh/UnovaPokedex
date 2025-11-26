@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/onboarding/presentation/pages/pokeball_splash_page.dart';
 import '../../features/onboarding/presentation/pages/main_menu_page.dart';
+import '../../features/pokedex/presentation/pages/favorites_page.dart';
 import '../../features/pokedex/presentation/pages/pokedex_list_page.dart';
 import '../../features/pokedex/presentation/pages/pokedex_detail_page.dart';
 import 'session_manager.dart';
@@ -99,6 +100,14 @@ class AppRouter {
             return PokedexDetailPage(pokemonName: pokemonName);
           },
         ),
+
+        // --- PASO 5: Ruta de Favoritos ---
+        GoRoute(
+          path: '/favorites',
+          name: 'favorites',
+          builder: (context, state) => const FavoritesPage(),
+        ),
+        // -------------------------------
       ],
     );
   }

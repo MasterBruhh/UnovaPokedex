@@ -56,6 +56,15 @@ class _MainMenuPageState extends State<MainMenuPage> {
                 // TODO: Implement trivia feature
               },
             ),
+
+            // --- PASO 6: Botón de Acceso a Favoritos ---
+            _TileSpec(
+              title: 'Favoritos',
+              icon: Icons.favorite,
+              height: columnWidth, // Altura cuadrada para equilibrar el grid
+              onTap: () => context.pushNamed('favorites'),
+            ),
+            // ------------------------------------------
           ];
 
           // Distribuir elementos entre columnas izquierda y derecha
@@ -126,4 +135,3 @@ class _TileSpec {
   final double height;
   final VoidCallback onTap;
 }
-

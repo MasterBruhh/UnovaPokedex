@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/share_utils.dart';
 import '../../../../core/utils/string_extensions.dart';
 import '../../../../core/widgets/frosted_icon_button.dart';
 import '../../../../core/widgets/loading_indicator.dart';
 import '../../../../core/widgets/wood_grain_background.dart';
+import '../../domain/entities/pokemon.dart';
+import '../providers/favorites_provider.dart';
 import '../providers/pokedex_providers.dart';
 import '../providers/pokemon_detail_provider.dart';
 import '../widgets/pokemon_detail/evolution_section.dart';
@@ -13,37 +16,60 @@ import '../widgets/pokemon_detail/pokemon_abilities_card.dart';
 import '../widgets/pokemon_detail/pokemon_header_card.dart';
 import '../widgets/pokemon_detail/pokemon_info_card.dart';
 import '../widgets/pokemon_detail/pokemon_moves_card.dart';
+import '../widgets/pokemon_detail/pokemon_share_card.dart';
 import '../widgets/pokemon_detail/pokemon_stats_card.dart';
 
-/// Página que muestra información detallada sobre un Pokémon
-class PokedexDetailPage extends ConsumerWidget {
+/// Página que muestra información detallada sobre un Pokémon.
+/// Convertido a ConsumerStatefulWidget para manejar el GlobalKey de la captura.
+class PokedexDetailPage extends ConsumerStatefulWidget { // CORREGIDO AQUÍ
   const PokedexDetailPage({
     super.key,
     this.pokemonName,
     this.pokemonId,
   }) : assert(
-          pokemonName != null || pokemonId != null,
-          'Either pokemonName or pokemonId must be provided',
-        );
+  pokemonName != null || pokemonId != null,
+  'Either pokemonName or pokemonId must be provided',
+  );
 
   final String? pokemonName;
   final int? pokemonId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final displayName = pokemonName?.toTitleCase() ?? 'Pokémon';
+  ConsumerState<PokedexDetailPage> createState() => _PokedexDetailPageState();
+}
+
+class _PokedexDetailPageState extends ConsumerState<PokedexDetailPage> {
+  // Key global para identificar el widget que queremos capturar como imagen
+  final GlobalKey _shareCardKey = GlobalKey();
+
+  @override
+  Widget build(BuildContext context) {
+    final displayName = widget.pokemonName?.toTitleCase() ?? 'Pokémon';
     final topPadding = MediaQuery.of(context).padding.top + 68;
 
-    // Observar el provider apropiado basado en lo que se proporcionó
-    final asyncValue = pokemonName != null
-        ? ref.watch(pokemonDetailProvider(pokemonName!))
-        : ref.watch(pokemonDetailByIdProvider(pokemonId!));
+    final asyncValue = widget.pokemonName != null
+        ? ref.watch(pokemonDetailProvider(widget.pokemonName!))
+        : ref.watch(pokemonDetailByIdProvider(widget.pokemonId!));
 
     return Scaffold(
       backgroundColor: AppColors.woodBrown,
       body: Stack(
         children: [
           const Positioned.fill(child: WoodGrainBackground()),
+
+          // --- WIDGET OCULTO PARA CAPTURA ---
+          // Esto renderiza la tarjeta fuera de la vista del usuario
+          // para que pueda ser capturada por el RepaintBoundary.
+          if (asyncValue.hasValue)
+            Positioned(
+              left: -9999, // Mover fuera de la pantalla
+              child: RepaintBoundary(
+                key: _shareCardKey,
+                child: PokemonShareCard(pokemon: asyncValue.value!),
+              ),
+            ),
+          // --------------------------------
+
           Padding(
             padding: EdgeInsets.only(top: topPadding),
             child: _buildBody(context, ref, asyncValue),
@@ -80,6 +106,49 @@ class PokedexDetailPage extends ConsumerWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(width: 12),
+
+                  // --- BOTONES DE ACCIÓN ---
+                  asyncValue.maybeWhen(
+                    data: (details) {
+                      // Verificar si está en favoritos usando el provider
+                      final isFav = ref.watch(favoritesProvider).any((p) => p.id == details.id);
+
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Botón Compartir (NUEVO)
+                          FrostedIconButton(
+                            icon: Icons.share,
+                            onPressed: () {
+                              // Llamar a la función utilitaria para capturar y compartir
+                              ShareUtils.captureAndShareWidget(
+                                globalKey: _shareCardKey,
+                                fileName: 'pokemon_${details.name}',
+                                text: '¡Mira las estadísticas de ${details.name.toTitleCase()} en mi Unova Pokedex!',
+                              );
+                            },
+                            tooltip: 'Compartir tarjeta',
+                          ),
+                          const SizedBox(width: 8),
+                          // Botón Favoritos
+                          FrostedIconButton(
+                            icon: isFav ? Icons.favorite : Icons.favorite_border,
+                            onPressed: () {
+                              final pokemonSummary = Pokemon(
+                                id: details.id,
+                                name: details.name,
+                                types: details.types,
+                              );
+                              ref.read(favoritesProvider.notifier).toggleFavorite(pokemonSummary);
+                            },
+                            tooltip: isFav ? 'Quitar de favoritos' : 'Agregar a favoritos',
+                          ),
+                        ],
+                      );
+                    },
+                    orElse: () => const SizedBox.shrink(),
+                  ),
                 ],
               ),
             ),
@@ -90,10 +159,10 @@ class PokedexDetailPage extends ConsumerWidget {
   }
 
   Widget _buildBody(
-    BuildContext context,
-    WidgetRef ref,
-    AsyncValue asyncValue,
-  ) {
+      BuildContext context,
+      WidgetRef ref,
+      AsyncValue asyncValue,
+      ) {
     return asyncValue.when(
       data: (pokemon) => _buildDetail(context, ref, pokemon),
       loading: () => const LoadingIndicator(),
@@ -102,10 +171,10 @@ class PokedexDetailPage extends ConsumerWidget {
   }
 
   Widget _buildDetail(
-    BuildContext context,
-    WidgetRef ref,
-    pokemon,
-  ) {
+      BuildContext context,
+      WidgetRef ref,
+      pokemon,
+      ) {
     final evolutionUseCase = ref.read(getEvolutionChainUseCaseProvider);
 
     return SingleChildScrollView(
@@ -113,11 +182,8 @@ class PokedexDetailPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Encabezado con imagen e información básica
           PokemonHeaderCard(pokemon: pokemon),
           const SizedBox(height: 16),
-
-          // Descripción
           if (pokemon.description.isNotEmpty)
             PokemonInfoCard(
               title: 'Descripción',
@@ -127,22 +193,16 @@ class PokedexDetailPage extends ConsumerWidget {
               ),
             ),
           const SizedBox(height: 16),
-
-          // Habilidades
           PokemonInfoCard(
             title: 'Habilidades',
             child: PokemonAbilitiesCard(abilities: pokemon.abilities),
           ),
           const SizedBox(height: 16),
-
-          // Estadísticas
           PokemonInfoCard(
             title: 'Estadísticas Base',
             child: PokemonStatsCard(stats: pokemon.stats),
           ),
           const SizedBox(height: 16),
-
-          // Cadena evolutiva
           if (pokemon.evolutionChain.isNotEmpty)
             PokemonInfoCard(
               title: 'Evoluciones',
@@ -155,8 +215,6 @@ class PokedexDetailPage extends ConsumerWidget {
               ),
             ),
           const SizedBox(height: 16),
-
-          // Movimientos
           PokemonInfoCard(
             title: 'Movimientos por Nivel',
             child: PokemonMovesCard(moves: pokemon.moves),
@@ -182,10 +240,10 @@ class PokedexDetailPage extends ConsumerWidget {
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: () {
-                if (pokemonName != null) {
-                  ref.invalidate(pokemonDetailProvider(pokemonName!));
-                } else if (pokemonId != null) {
-                  ref.invalidate(pokemonDetailByIdProvider(pokemonId!));
+                if (widget.pokemonName != null) {
+                  ref.invalidate(pokemonDetailProvider(widget.pokemonName!));
+                } else if (widget.pokemonId != null) {
+                  ref.invalidate(pokemonDetailByIdProvider(widget.pokemonId!));
                 }
               },
               icon: const Icon(Icons.refresh),
