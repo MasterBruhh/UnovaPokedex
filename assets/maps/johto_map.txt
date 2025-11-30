@@ -1,0 +1,59 @@
+<p align="center">
+  <img border="0"
+       src="/pokearth/johto.png"
+       usemap="#johto"
+       width="166"
+       height="144">
+  <map name="johto">
+
+    <area shape="rect" coords="144, 109, 152, 117" title="New Bark Town" data-location="new-bark-town">
+    <area shape="rect" coords="105, 109, 113, 117" title="Cherrygrove City" data-location="cherrygrove-city">
+    <area shape="rect" coords="90, 60, 97, 68" title="Violet City" data-location="violet-city">
+    <area shape="rect" coords="116, 60, 136, 69" title="Dark Cave" data-location="dark-cave">
+    <area shape="rect" coords="81, 76, 89, 84" title="Ruins of Alph" data-location="ruins-of-alph">
+    <area shape="rect" coords="90, 129, 98, 137" title="Union Cave" data-location="union-cave">
+    <area shape="rect" coords="71, 129, 79, 137" title="Azalea Town" data-location="azalea-town">
+    <area shape="rect" coords="53, 129, 61, 137" title="Ilex Forest" data-location="ilex-forest">
+    <area shape="rect" coords="49, 88, 63, 103" title="Goldenrod City" data-location="goldenrod-city">
+    <area shape="rect" coords="53, 60, 61, 68" title="National Park" data-location="national-park">
+    <area shape="rect" coords="66, 40, 81, 48" title="Ecruteak City" data-location="ecruteak-city">
+    <area shape="rect" coords="71, 40, 81, 48" title="Ecruteak City" data-location="ecruteak-city">
+    <area shape="rect" coords="18, 53, 33, 61" title="Olivine City" data-location="olivine-city">
+    <area shape="rect" coords="18, 88, 26, 96" title="Whirl Islands" data-location="whirl-islands">
+    <area shape="rect" coords="8, 96, 16, 104" title="Cianwood City" data-location="cianwood-city">
+    <area shape="rect" coords="86, 40, 94, 48" title="Mt. Mortar" data-location="mt-mortar">
+    <area shape="rect" coords="109, 40, 117, 48" title="Mahogany Town" data-location="mahogany-town">
+    <area shape="rect" coords="109, 7, 117, 15" title="Lake of Rage" data-location="lake-of-rage">
+    <area shape="rect" coords="129, 40, 137, 48" title="Ice Path" data-location="ice-path">
+    <area shape="rect" coords="137, 40, 145, 48" title="Blackthorn City" data-location="blackthorn-city">
+    <area shape="rect" coords="137, 30, 145, 38" title="Dragon's Den" data-location="dragons-den">
+    <area shape="rect" coords="158, 80, 166, 88" title="Mt. Silver" data-location="mt-silver">
+    <area shape="rect" coords="161, 109, 166, 115" title="Tohjo Falls (Kanto)" data-location="tohjo-falls">
+    <area shape="rect" coords="0, 93, 5, 101" title="Safari Zone" data-location="johto-safari-zone">
+    <area shape="rect" coords="10, 51, 18, 59" title="Battle Frontier" data-location="battle-frontier">
+
+    <area shape="rect" coords="152, 108, 161, 117" title="Route 26 (Kanto)" data-location="kanto-route-26">
+
+    <area shape="rect" coords="113, 108, 143, 118" title="Route 29" data-location="johto-route-29">
+    <area shape="rect" coords="105, 108, 116, 68" title="Route 30" data-location="johto-route-30">
+    <area shape="rect" coords="98, 59, 115, 68" title="Route 31" data-location="johto-route-31">
+    <area shape="rect" coords="89, 68, 99, 128" title="Route 32" data-location="johto-route-32">
+    <area shape="rect" coords="79, 128, 90, 137" title="Route 33" data-location="johto-route-33">
+    <area shape="rect" coords="52, 103, 62, 128" title="Route 34" data-location="johto-route-34">
+    <area shape="rect" coords="52, 68, 62, 88" title="Route 35" data-location="johto-route-35">
+    <area shape="rect" coords="60, 59, 89, 69" title="Route 36" data-location="johto-route-36">
+    <area shape="rect" coords="71, 55, 82, 58" title="Route 37" data-location="johto-route-37">
+    <area shape="rect" coords="25, 39, 66, 49" title="Route 38" data-location="johto-route-38">
+    <area shape="rect" coords="25, 48, 34, 53" title="Route 39" data-location="johto-route-39">
+    <area shape="rect" coords="17, 61, 27, 82" title="Route 40" data-location="johto-route-40">
+    <area shape="rect" coords="17, 82, 27, 105" title="Route 41" data-location="johto-route-41">
+    <area shape="rect" coords="81, 39, 109, 49" title="Route 42" data-location="johto-route-42">
+    <area shape="rect" coords="108, 15, 118, 40" title="Route 43" data-location="johto-route-43">
+    <area shape="rect" coords="117, 39, 128, 49" title="Route 44" data-location="johto-route-44">
+    <area shape="rect" coords="136, 48, 146, 89" title="Route 45" data-location="johto-route-45">
+    <area shape="rect" coords="130, 78, 140, 108" title="Route 46" data-location="johto-route-46">
+    <area shape="rect" coords="0, 104, 8, 111" title="Route 47" data-location="johto-route-47">
+    <area shape="rect" coords="0, 100, 6, 105" title="Route 48" data-location="johto-route-48">
+
+  </map>
+</p>

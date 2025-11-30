@@ -44,9 +44,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
               title: 'Mapa',
               icon: Icons.map,
               height: columnWidth,
-              onTap: () {
-                // TODO: Implement map feature
-              },
+              onTap: () => context.pushNamed('maps'),
             ),
             _TileSpec(
               title: 'Trivia',

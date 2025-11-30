@@ -5,6 +5,8 @@ import '../../features/onboarding/presentation/pages/main_menu_page.dart';
 import '../../features/pokedex/presentation/pages/favorites_page.dart';
 import '../../features/pokedex/presentation/pages/pokedex_list_page.dart';
 import '../../features/pokedex/presentation/pages/pokedex_detail_page.dart';
+import '../../features/maps/presentation/pages/region_selection_page.dart';
+import '../../features/maps/presentation/pages/interactive_map_page.dart';
 import 'session_manager.dart';
 
 /// Observador de rutas para rastrear la navegación
@@ -106,6 +108,22 @@ class AppRouter {
           path: '/favorites',
           name: 'favorites',
           builder: (context, state) => const FavoritesPage(),
+        ),
+        // -------------------------------
+
+        // --- Rutas de Mapas ---
+        GoRoute(
+          path: '/maps',
+          name: 'maps',
+          builder: (context, state) => const RegionSelectionPage(),
+        ),
+        GoRoute(
+          path: '/maps/:region',
+          name: 'map_detail',
+          builder: (context, state) {
+            final regionName = state.pathParameters['region'] ?? 'kanto';
+            return InteractiveMapPage(regionName: regionName);
+          },
         ),
         // -------------------------------
       ],
