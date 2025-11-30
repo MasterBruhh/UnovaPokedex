@@ -45,8 +45,8 @@
     <area shape="rect" coords="71, 55, 82, 58" title="Route 37" data-location="johto-route-37">
     <area shape="rect" coords="25, 39, 66, 49" title="Route 38" data-location="johto-route-38">
     <area shape="rect" coords="25, 48, 34, 53" title="Route 39" data-location="johto-route-39">
-    <area shape="rect" coords="17, 61, 27, 82" title="Route 40" data-location="johto-route-40">
-    <area shape="rect" coords="17, 82, 27, 105" title="Route 41" data-location="johto-route-41">
+    <area shape="rect" coords="17, 61, 27, 82" title="Route 40" data-location="johto-sea-route-40">
+    <area shape="rect" coords="17, 82, 27, 105" title="Route 41" data-location="johto-sea-route-41">
     <area shape="rect" coords="81, 39, 109, 49" title="Route 42" data-location="johto-route-42">
     <area shape="rect" coords="108, 15, 118, 40" title="Route 43" data-location="johto-route-43">
     <area shape="rect" coords="117, 39, 128, 49" title="Route 44" data-location="johto-route-44">
