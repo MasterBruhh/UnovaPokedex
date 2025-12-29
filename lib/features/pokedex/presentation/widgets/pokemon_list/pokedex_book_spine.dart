@@ -16,6 +16,7 @@ class PokedexBookSpine extends StatelessWidget {
     required this.types,
     required this.region,
     required this.onTap,
+    this.opacity = 1.0,
   });
 
   final int id;
@@ -23,12 +24,15 @@ class PokedexBookSpine extends StatelessWidget {
   final List<PokemonType> types;
   final PokemonRegion region;
   final VoidCallback onTap;
+  final double opacity;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
+    return Opacity(
+      opacity: opacity,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
         width: 100,
         margin: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
@@ -47,6 +51,11 @@ class PokedexBookSpine extends StatelessWidget {
                 PokemonSpriteUtils.getSpriteUrl(id),
                 height: 60,
                 fit: BoxFit.contain,
+                errorBuilder: (c, e, s) => const Icon(
+                  Icons.catching_pokemon,
+                  size: 60,
+                  color: AppColors.mediumBrown,
+                ),
               ),
             ),
             Expanded(
@@ -75,6 +84,7 @@ class PokedexBookSpine extends StatelessWidget {
           ],
         ),
       ),
+    )
     );
   }
 }

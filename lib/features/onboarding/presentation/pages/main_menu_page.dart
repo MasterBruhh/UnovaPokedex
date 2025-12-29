@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/audio/audio_controller.dart';
 import '../../../../core/config/app_constants.dart';
+import '../../../../core/widgets/bw_grid_background.dart';
 import '../widgets/menu_tile.dart';
 import '../widgets/pokedex_tile.dart';
 
@@ -32,10 +33,22 @@ class _MainMenuPageState extends State<MainMenuPage> {
   Widget build(BuildContext context) {
     const spacing = 16.0;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Menú')),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF5F5F5),
+      ),
+      child: Stack(
+        children: [
+          const Positioned.fill(child: BWGridBackground()),
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              title: const Text('Menú'),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            ),
+            body: LayoutBuilder(
+              builder: (context, constraints) {
           final columnWidth = (constraints.maxWidth - spacing) / 2;
 
           // Definir elementos del menú y sus alturas
@@ -43,12 +56,14 @@ class _MainMenuPageState extends State<MainMenuPage> {
             _TileSpec(
               title: 'Mapa',
               icon: Icons.map,
+              color: Colors.purple,
               height: columnWidth,
               onTap: () => context.pushNamed('maps'),
             ),
             _TileSpec(
               title: 'Trivia',
               icon: Icons.quiz,
+              color: Colors.yellow,
               height: columnWidth * 1.2,
               onTap: () => context.pushNamed('trivia'),
             ),
@@ -57,6 +72,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
             _TileSpec(
               title: 'Favoritos',
               icon: Icons.favorite,
+              color: Colors.green,
               height: columnWidth, // Altura cuadrada para equilibrar el grid
               onTap: () => context.pushNamed('favorites'),
             ),
@@ -93,8 +109,11 @@ class _MainMenuPageState extends State<MainMenuPage> {
                 ),
               ],
             ),
-          );
-        },
+              );
+            },
+          ),
+        ),
+        ],
       ),
     );
   }
@@ -107,6 +126,7 @@ class _MainMenuPageState extends State<MainMenuPage> {
           MenuTile.fixedHeight(
             title: items[i].title,
             icon: items[i].icon,
+            color: items[i].color,
             height: items[i].height,
             onTap: items[i].onTap,
           ),
@@ -122,12 +142,14 @@ class _TileSpec {
   const _TileSpec({
     required this.title,
     required this.icon,
+    required this.color,
     required this.height,
     required this.onTap,
   });
 
   final String title;
   final IconData icon;
+  final Color color;
   final double height;
   final VoidCallback onTap;
 }

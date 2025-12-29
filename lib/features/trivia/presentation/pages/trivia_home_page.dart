@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/yellow_grid_background.dart';
 import '../../theme/trivia_colors.dart';
 
 /// Pantalla de inicio del módulo de Trivia.
@@ -12,13 +13,11 @@ class TriviaHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: TriviaColors.backgroundGradient,
-        ),
-        child: SafeArea(
+      backgroundColor: const Color(0xFF8B7500),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: YellowGridBackground()),
+          SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -40,13 +39,13 @@ class TriviaHomePage extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.catching_pokemon,
                     size: 100,
-                    color: Colors.white,
+                    color: TriviaColors.accent,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -166,7 +165,7 @@ class TriviaHomePage extends StatelessWidget {
               ],
             ),
           ),
-        ),
+          )],
       ),
     );
   }
@@ -202,8 +201,8 @@ class TriviaHomePage extends StatelessWidget {
               Text(
                 subtitle,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 14,
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
               ),
             ],

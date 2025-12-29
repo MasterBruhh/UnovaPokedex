@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/share_utils.dart';
 import '../../../../core/utils/string_extensions.dart';
+import '../../../../core/widgets/cyan_grid_background.dart';
 import '../../../../core/widgets/frosted_icon_button.dart';
 import '../../../../core/widgets/loading_indicator.dart';
-import '../../../../core/widgets/wood_grain_background.dart';
 import '../../domain/entities/pokemon.dart';
 import '../providers/favorites_provider.dart';
 import '../providers/pokedex_providers.dart';
@@ -52,10 +52,10 @@ class _PokedexDetailPageState extends ConsumerState<PokedexDetailPage> {
         : ref.watch(pokemonDetailByIdProvider(widget.pokemonId!));
 
     return Scaffold(
-      backgroundColor: AppColors.woodBrown,
+      backgroundColor: const Color(0xFF4A8B8B),
       body: Stack(
         children: [
-          const Positioned.fill(child: WoodGrainBackground()),
+          const Positioned.fill(child: CyanGridBackground()),
 
           // --- WIDGET OCULTO PARA CAPTURA ---
           // Esto renderiza la tarjeta fuera de la vista del usuario

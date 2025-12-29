@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/purple_grid_background.dart';
+import '../../../pokedex/presentation/utils/pokemon_region_colors.dart';
+import '../../../pokedex/domain/entities/pokemon_region.dart';
 import '../../domain/entities/region_config.dart';
 
 /// Pantalla de selección de región
@@ -13,30 +16,29 @@ class RegionSelectionPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
+      backgroundColor: const Color(0xFF4A2B5C),
       appBar: AppBar(
-        title: const Text('Pokémon Regions'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text(
+          'Pokémon Regions',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: OrientationBuilder(
-        builder: (context, orientation) {
-          final isPortrait = orientation == Orientation.portrait;
-          
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.blue.shade200,
-                  Colors.green.shade200,
-                ],
-              ),
-            ),
-            child: isPortrait
-                ? _buildPortraitLayout(context)
-                : _buildLandscapeLayout(context),
-          );
-        },
+      body: Stack(
+        children: [
+          const Positioned.fill(child: PurpleGridBackground()),
+          OrientationBuilder(
+            builder: (context, orientation) {
+              final isPortrait = orientation == Orientation.portrait;
+              
+              return isPortrait
+                  ? _buildPortraitLayout(context)
+                  : _buildLandscapeLayout(context);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -49,7 +51,7 @@ class RegionSelectionPage extends ConsumerWidget {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            const Icon(Icons.map, size: 80, color: Colors.white),
+            const Icon(Icons.map, size: 80, color: Color(0xFF9B7CB5)),
             const SizedBox(height: 20),
             const Text(
               'Select a Region',
@@ -78,7 +80,7 @@ class RegionSelectionPage extends ConsumerWidget {
         children: [
           const Row(
             children: [
-              Icon(Icons.map, size: 60, color: Colors.white),
+              Icon(Icons.map, size: 60, color: Color(0xFF9B7CB5)),
               SizedBox(width: 16),
               Expanded(
                 child: Text(
@@ -130,58 +132,114 @@ class RegionSelectionPage extends ConsumerWidget {
     required RegionConfig config,
     required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 8,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: InkWell(
-        onTap: config.isLocked ? null : onTap,
-        borderRadius: BorderRadius.circular(15),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Row(
-            children: [
-              Icon(
-                config.icon,
-                size: 50,
-                color: config.isLocked ? Colors.grey : Colors.red.shade700,
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      config.name,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: config.isLocked ? Colors.grey : Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      config.description,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: config.isLocked ? Colors.grey : Colors.black54,
-                      ),
-                    ),
-                  ],
+    // Mapear nombre de región a PokemonRegion para obtener el color
+    final regionColor = _getRegionColor(config.name);
+
+    return InkWell(
+      onTap: config.isLocked ? null : onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Tab de carpeta - sobresale arriba
+          Positioned(
+            top: -8,
+            left: 12,
+            child: Container(
+              width: 100,
+              height: 35,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A1A),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
+                ),
+                border: Border.all(
+                  color: Colors.black.withOpacity(0.5),
+                  width: 2,
                 ),
               ),
-              Icon(
-                config.isLocked ? Icons.lock : Icons.arrow_forward_ios,
-                color: config.isLocked ? Colors.grey : Colors.black54,
-              ),
-            ],
+            ),
           ),
-        ),
+          // Cuerpo principal de la carpeta
+          Container(
+            padding: const EdgeInsets.all(20),
+            constraints: const BoxConstraints(maxWidth: 400),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2A2A2A),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Colors.black.withOpacity(0.5),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  config.icon,
+                  size: 50,
+                  color: config.isLocked ? Colors.grey : regionColor,
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        config.name,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: config.isLocked ? Colors.grey : Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        config.description,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: config.isLocked ? Colors.grey : Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  config.isLocked ? Icons.lock : Icons.arrow_forward_ios,
+                  color: config.isLocked ? Colors.grey : Colors.white70,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  Color _getRegionColor(String regionName) {
+    switch (regionName.toLowerCase()) {
+      case 'kanto':
+        return PokemonRegionColors.getColor(PokemonRegion.kanto);
+      case 'johto':
+        return PokemonRegionColors.getColor(PokemonRegion.johto);
+      case 'hoenn':
+        return PokemonRegionColors.getColor(PokemonRegion.hoenn);
+      case 'sinnoh':
+        return PokemonRegionColors.getColor(PokemonRegion.sinnoh);
+      case 'unova':
+        return PokemonRegionColors.getColor(PokemonRegion.unova);
+      case 'kalos':
+        return PokemonRegionColors.getColor(PokemonRegion.kalos);
+      default:
+        return Colors.grey;
+    }
   }
 }
