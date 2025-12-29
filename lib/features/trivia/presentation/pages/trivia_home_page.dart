@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pokedex/l10n/app_localizations.dart';
 
+import '../../../../core/widgets/yellow_grid_background.dart';
 import '../../theme/trivia_colors.dart';
 import '../providers/trivia_provider.dart';
 
@@ -16,13 +17,11 @@ class TriviaHomePage extends ConsumerWidget {
     final currentLocale = ref.watch(localeProvider);
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: TriviaColors.backgroundGradient,
-        ),
-        child: SafeArea(
+      backgroundColor: const Color(0xFF8B7500),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: YellowGridBackground()),
+          SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -75,7 +74,7 @@ class TriviaHomePage extends ConsumerWidget {
                   child: const Icon(
                     Icons.catching_pokemon,
                     size: 100,
-                    color: Colors.white,
+                    color: TriviaColors.accent,
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -197,6 +196,7 @@ class TriviaHomePage extends ConsumerWidget {
             ),
           ),
         ),
+      ],
       ),
     );
   }
@@ -232,8 +232,8 @@ class TriviaHomePage extends ConsumerWidget {
               Text(
                 subtitle,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 14,
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
               ),
             ],

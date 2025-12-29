@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 // 1. IMPORTAR L10N
 import 'package:pokedex/l10n/app_localizations.dart';
 
+import '../../../../core/widgets/yellow_grid_background.dart';
 import '../../theme/trivia_colors.dart';
 import '../providers/trivia_provider.dart';
 import '../widgets/score_display.dart';
@@ -22,13 +23,11 @@ class TriviaGameOverPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: TriviaColors.backgroundGradient,
-        ),
-        child: SafeArea(
+      backgroundColor: const Color(0xFF8B7500),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: YellowGridBackground()),
+          SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -146,7 +145,7 @@ class TriviaGameOverPage extends ConsumerWidget {
               ],
             ),
           ),
-        ),
+          )],
       ),
     );
   }

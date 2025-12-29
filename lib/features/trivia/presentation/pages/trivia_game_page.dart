@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pokedex/l10n/app_localizations.dart';
 
+import '../../../../core/widgets/yellow_grid_background.dart';
 import '../../theme/trivia_colors.dart';
 import '../../domain/enums/question_type.dart';
 import '../providers/trivia_provider.dart';
@@ -40,16 +41,14 @@ class _TriviaGamePageState extends ConsumerState<TriviaGamePage> {
     });
 
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: TriviaColors.backgroundGradient,
-        ),
-        child: SafeArea(
-          // PASAR L10N A LOS WIDGETS HIJOS
-          child: _buildContent(context, gameState, l10n),
-        ),
+      backgroundColor: const Color(0xFF8B7500),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: YellowGridBackground()),
+          SafeArea(
+            child: _buildContent(context, gameState, l10n),
+          ),
+        ],
       ),
     );
   }

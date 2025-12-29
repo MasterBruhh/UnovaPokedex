@@ -103,7 +103,7 @@ class _PokemonLoadingWidgetState extends State<PokemonLoadingWidget>
             },
             child: const Icon(
               Icons.catching_pokemon,
-              size: 64,
+              size: 80,
               color: TriviaColors.primary,
             ),
           ),
