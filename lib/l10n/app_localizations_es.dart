@@ -89,4 +89,82 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get revealedLabel => 'Imagen de Pokémon revelada';
+
+  @override
+  String get timeUp => '¡Tiempo agotado!';
+
+  @override
+  String secondsRemaining(Object seconds) {
+    return '$seconds segundos restantes';
+  }
+
+  @override
+  String get rankingAndAchievements => 'Ranking y Logros';
+
+  @override
+  String get rankingTab => 'Ranking';
+
+  @override
+  String get achievementsTab => 'Logros';
+
+  @override
+  String get bestScore => 'Mejor Puntuación';
+
+  @override
+  String get bestScoreLabel => 'Tu mejor puntuación histórica';
+
+  @override
+  String get noRankingYet => 'Sin registros aún';
+
+  @override
+  String get playToSeeRanking => '¡Juega para ver tu ranking!';
+
+  @override
+  String get achievementsUnlocked => 'desbloqueados';
+
+  @override
+  String get newAchievement => '¡Nuevo Logro!';
+
+  @override
+  String get continueButton => 'Continuar';
+
+  @override
+  String get viewRanking => 'Ver Ranking';
+
+  @override
+  String get achievementFirstGame => 'Primera Partida';
+
+  @override
+  String get achievementFirstGameDesc =>
+      '¡Jugaste tu primera partida de trivia!';
+
+  @override
+  String get achievementScore5 => 'Entrenador Novato';
+
+  @override
+  String get achievementScore5Desc => 'Alcanza 5 puntos en una partida';
+
+  @override
+  String get achievementScore10 => 'Conocedor Pokémon';
+
+  @override
+  String get achievementScore10Desc => 'Alcanza 10 puntos en una partida';
+
+  @override
+  String get achievementScore25 => 'Experto Pokémon';
+
+  @override
+  String get achievementScore25Desc => 'Alcanza 25 puntos en una partida';
+
+  @override
+  String get achievementScore50 => 'Maestro Pokémon';
+
+  @override
+  String get achievementScore50Desc => 'Alcanza 50 puntos en una partida';
+
+  @override
+  String get achievementScore100 => 'Leyenda Pokémon';
+
+  @override
+  String get achievementScore100Desc => 'Alcanza 100 puntos en una partida';
 }

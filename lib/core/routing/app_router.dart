@@ -10,6 +10,7 @@ import '../../features/maps/presentation/pages/interactive_map_page.dart';
 import '../../features/trivia/presentation/pages/trivia_home_page.dart';
 import '../../features/trivia/presentation/pages/trivia_game_page.dart';
 import '../../features/trivia/presentation/pages/trivia_game_over_page.dart';
+import '../../features/trivia/presentation/pages/trivia_ranking_page.dart';
 import 'session_manager.dart';
 
 /// Observador de rutas para rastrear la navegación
@@ -148,6 +149,11 @@ class AppRouter {
             final score = int.tryParse(state.pathParameters['score'] ?? '0') ?? 0;
             return TriviaGameOverPage(score: score);
           },
+        ),
+        GoRoute(
+          path: '/trivia/ranking',
+          name: 'trivia_ranking',
+          builder: (context, state) => const TriviaRankingPage(),
         ),
         // -------------------------------
       ],

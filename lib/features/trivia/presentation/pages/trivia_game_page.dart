@@ -89,13 +89,18 @@ class _TriviaGamePageState extends ConsumerState<TriviaGamePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(
-                onPressed: () => _showExitDialog(context, l10n),
-                icon: const Icon(Icons.close, color: Colors.white),
-                iconSize: 28,
+              Semantics(
+                label: l10n.exit,
+                button: true,
+                child: IconButton(
+                  onPressed: () => _showExitDialog(context, l10n),
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  iconSize: 28,
+                ),
               ),
+              // Timer display
+              CircularTimerDisplay(timeRemaining: gameState.timeRemaining),
               ScoreDisplay(score: gameState.score),
-              const SizedBox(width: 48),
             ],
           ),
 

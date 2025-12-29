@@ -160,33 +160,68 @@ class TriviaHomePage extends ConsumerWidget {
                 const SizedBox(height: 32),
 
                 // Botón Iniciar
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => context.pushNamed('trivia_game'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: TriviaColors.accent,
-                      foregroundColor: TriviaColors.textPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 8,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.play_arrow, size: 28),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n.startGame, // TRADUCIDO
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
-                          ),
+                Semantics(
+                  label: l10n.startGame,
+                  button: true,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => context.pushNamed('trivia_game'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: TriviaColors.accent,
+                        foregroundColor: TriviaColors.textPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                      ],
+                        elevation: 8,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.play_arrow, size: 28),
+                          const SizedBox(width: 8),
+                          Text(
+                            l10n.startGame,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Botón Ver Ranking
+                Semantics(
+                  label: l10n.viewRanking,
+                  button: true,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.pushNamed('trivia_ranking'),
+                      icon: const Icon(Icons.leaderboard, size: 24),
+                      label: Text(
+                        l10n.viewRanking,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white, width: 2),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
                     ),
                   ),
                 ),

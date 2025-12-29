@@ -253,6 +253,156 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Imagen de Pokémon revelada'**
   String get revealedLabel;
+
+  /// No description provided for @timeUp.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Tiempo agotado!'**
+  String get timeUp;
+
+  /// No description provided for @secondsRemaining.
+  ///
+  /// In es, this message translates to:
+  /// **'{seconds} segundos restantes'**
+  String secondsRemaining(Object seconds);
+
+  /// No description provided for @rankingAndAchievements.
+  ///
+  /// In es, this message translates to:
+  /// **'Ranking y Logros'**
+  String get rankingAndAchievements;
+
+  /// No description provided for @rankingTab.
+  ///
+  /// In es, this message translates to:
+  /// **'Ranking'**
+  String get rankingTab;
+
+  /// No description provided for @achievementsTab.
+  ///
+  /// In es, this message translates to:
+  /// **'Logros'**
+  String get achievementsTab;
+
+  /// No description provided for @bestScore.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejor Puntuación'**
+  String get bestScore;
+
+  /// No description provided for @bestScoreLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu mejor puntuación histórica'**
+  String get bestScoreLabel;
+
+  /// No description provided for @noRankingYet.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin registros aún'**
+  String get noRankingYet;
+
+  /// No description provided for @playToSeeRanking.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Juega para ver tu ranking!'**
+  String get playToSeeRanking;
+
+  /// No description provided for @achievementsUnlocked.
+  ///
+  /// In es, this message translates to:
+  /// **'desbloqueados'**
+  String get achievementsUnlocked;
+
+  /// No description provided for @newAchievement.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Nuevo Logro!'**
+  String get newAchievement;
+
+  /// No description provided for @continueButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Continuar'**
+  String get continueButton;
+
+  /// No description provided for @viewRanking.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver Ranking'**
+  String get viewRanking;
+
+  /// No description provided for @achievementFirstGame.
+  ///
+  /// In es, this message translates to:
+  /// **'Primera Partida'**
+  String get achievementFirstGame;
+
+  /// No description provided for @achievementFirstGameDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Jugaste tu primera partida de trivia!'**
+  String get achievementFirstGameDesc;
+
+  /// No description provided for @achievementScore5.
+  ///
+  /// In es, this message translates to:
+  /// **'Entrenador Novato'**
+  String get achievementScore5;
+
+  /// No description provided for @achievementScore5Desc.
+  ///
+  /// In es, this message translates to:
+  /// **'Alcanza 5 puntos en una partida'**
+  String get achievementScore5Desc;
+
+  /// No description provided for @achievementScore10.
+  ///
+  /// In es, this message translates to:
+  /// **'Conocedor Pokémon'**
+  String get achievementScore10;
+
+  /// No description provided for @achievementScore10Desc.
+  ///
+  /// In es, this message translates to:
+  /// **'Alcanza 10 puntos en una partida'**
+  String get achievementScore10Desc;
+
+  /// No description provided for @achievementScore25.
+  ///
+  /// In es, this message translates to:
+  /// **'Experto Pokémon'**
+  String get achievementScore25;
+
+  /// No description provided for @achievementScore25Desc.
+  ///
+  /// In es, this message translates to:
+  /// **'Alcanza 25 puntos en una partida'**
+  String get achievementScore25Desc;
+
+  /// No description provided for @achievementScore50.
+  ///
+  /// In es, this message translates to:
+  /// **'Maestro Pokémon'**
+  String get achievementScore50;
+
+  /// No description provided for @achievementScore50Desc.
+  ///
+  /// In es, this message translates to:
+  /// **'Alcanza 50 puntos en una partida'**
+  String get achievementScore50Desc;
+
+  /// No description provided for @achievementScore100.
+  ///
+  /// In es, this message translates to:
+  /// **'Leyenda Pokémon'**
+  String get achievementScore100;
+
+  /// No description provided for @achievementScore100Desc.
+  ///
+  /// In es, this message translates to:
+  /// **'Alcanza 100 puntos en una partida'**
+  String get achievementScore100Desc;
 }
 
 class _AppLocalizationsDelegate

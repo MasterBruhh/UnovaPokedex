@@ -2,3 +2,4 @@
 export 'trivia_home_page.dart';
 export 'trivia_game_page.dart';
 export 'trivia_game_over_page.dart';
+export 'trivia_ranking_page.dart';
