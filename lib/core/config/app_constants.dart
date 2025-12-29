@@ -12,6 +12,8 @@ class AppConstants {
       'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon';
   static const String pokemonArtworkBaseUrl =
       'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork';
+  static const String pokemonShinyArtworkBaseUrl =
+      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny';
 
   // Límites de datos de Pokémon
   static const int maxPokemonId = 1025;

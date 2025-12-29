@@ -7,7 +7,7 @@ import '../../../domain/entities/pokemon_type.dart';
 import '../../utils/pokemon_type_colors.dart';
 
 /// Tarjeta de encabezado que muestra información básica del Pokémon
-class PokemonHeaderCard extends StatelessWidget {
+class PokemonHeaderCard extends StatefulWidget {
   const PokemonHeaderCard({
     super.key,
     required this.pokemon,
@@ -16,7 +16,16 @@ class PokemonHeaderCard extends StatelessWidget {
   final PokemonDetail pokemon;
 
   @override
+  State<PokemonHeaderCard> createState() => _PokemonHeaderCardState();
+}
+
+class _PokemonHeaderCardState extends State<PokemonHeaderCard> {
+  bool _isShiny = false;
+
+  @override
   Widget build(BuildContext context) {
+    final pokemon = widget.pokemon;
+    
     return Card(
       color: AppColors.cardOverlay,
       elevation: 4,
@@ -24,20 +33,102 @@ class PokemonHeaderCard extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Hero(
-              tag: 'pokemon-artwork-${pokemon.id}',
-              child: Image.network(
-                PokemonSpriteUtils.getArtworkUrl(pokemon.id),
-                height: 200,
-                fit: BoxFit.contain,
-                errorBuilder: (c, e, s) => const Icon(
-                  Icons.broken_image,
+            // Número de Pokédex Nacional
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black26,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '#${pokemon.id.toString().padLeft(4, '0')}',
+                style: const TextStyle(
                   color: Colors.white,
-                  size: 100,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            
+            // Imagen del Pokémon con animación
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Hero(
+                  tag: 'pokemon-artwork-${pokemon.id}',
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: Image.network(
+                      _isShiny
+                          ? PokemonSpriteUtils.getShinyArtworkUrl(pokemon.id)
+                          : PokemonSpriteUtils.getArtworkUrl(pokemon.id),
+                      key: ValueKey(_isShiny),
+                      height: 200,
+                      fit: BoxFit.contain,
+                      errorBuilder: (c, e, s) => const Icon(
+                        Icons.broken_image,
+                        color: Colors.white,
+                        size: 100,
+                      ),
+                    ),
+                  ),
+                ),
+                // Indicador de shiny
+                if (_isShiny)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withOpacity(0.9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.auto_awesome,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            
+            // Switch de Shiny
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.auto_awesome,
+                  size: 18,
+                  color: _isShiny ? Colors.amber : Colors.white54,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Shiny',
+                  style: TextStyle(
+                    color: _isShiny ? Colors.amber : Colors.white54,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Switch(
+                  value: _isShiny,
+                  onChanged: (value) {
+                    setState(() {
+                      _isShiny = value;
+                    });
+                  },
+                  activeColor: Colors.amber,
+                  activeTrackColor: Colors.amber.withOpacity(0.4),
+                  inactiveThumbColor: Colors.white54,
+                  inactiveTrackColor: Colors.white24,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            
             Text(
               pokemon.name.toTitleCase(),
               style: const TextStyle(
@@ -61,18 +152,70 @@ class PokemonHeaderCard extends StatelessWidget {
               runSpacing: 8,
               alignment: WrapAlignment.center,
               children: [
-                Chip(
-                  label: Text('Altura: ${pokemon.height.toStringAsFixed(0)}'),
-                  backgroundColor: Colors.white24,
+                _InfoChip(
+                  icon: Icons.straighten,
+                  label: 'Altura',
+                  value: '${(pokemon.height / 10).toStringAsFixed(1)} m',
                 ),
-                Chip(
-                  label: Text('Peso: ${pokemon.weight.toStringAsFixed(0)}'),
-                  backgroundColor: Colors.white24,
+                _InfoChip(
+                  icon: Icons.fitness_center,
+                  label: 'Peso',
+                  value: '${(pokemon.weight / 10).toStringAsFixed(1)} kg',
                 ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white12,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white70, size: 16),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 10,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

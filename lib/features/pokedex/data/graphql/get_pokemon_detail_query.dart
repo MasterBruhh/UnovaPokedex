@@ -18,6 +18,7 @@ const String getPokemonDetailQuery = r'''
       }
       pokemon_v2_pokemonspecy {
         id
+        evolution_chain_id
         pokemon_v2_pokemonspeciesflavortexts(
           where: {language_id: {_eq: 7}}
           order_by: {version_id: desc}
@@ -28,15 +29,40 @@ const String getPokemonDetailQuery = r'''
             id
             name
             evolves_from_species_id
+            pokemon_v2_pokemons {
+              id
+              name
+            }
           }
         }
       }
-      pokemon_v2_pokemonmoves(
+      levelUpMoves: pokemon_v2_pokemonmoves(
         where: {pokemon_v2_movelearnmethod: {name: {_eq: "level-up"}}}
         order_by: [{level: asc}, {move_id: asc}]
       ) {
         move_id
         level
+        pokemon_v2_move { name }
+      }
+      tmMoves: pokemon_v2_pokemonmoves(
+        where: {pokemon_v2_movelearnmethod: {name: {_eq: "machine"}}}
+        order_by: {move_id: asc}
+      ) {
+        move_id
+        pokemon_v2_move { name }
+      }
+      tutorMoves: pokemon_v2_pokemonmoves(
+        where: {pokemon_v2_movelearnmethod: {name: {_eq: "tutor"}}}
+        order_by: {move_id: asc}
+      ) {
+        move_id
+        pokemon_v2_move { name }
+      }
+      eggMoves: pokemon_v2_pokemonmoves(
+        where: {pokemon_v2_movelearnmethod: {name: {_eq: "egg"}}}
+        order_by: {move_id: asc}
+      ) {
+        move_id
         pokemon_v2_move { name }
       }
     }

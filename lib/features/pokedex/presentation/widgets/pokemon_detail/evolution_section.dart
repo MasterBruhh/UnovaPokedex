@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../domain/entities/evolution_detail.dart';
 import '../../../domain/entities/pokemon_detail.dart';
 import '../../../domain/usecases/get_evolution_chain.dart';
 import 'evolution_chain_row.dart';
@@ -10,11 +11,13 @@ class EvolutionSection extends StatelessWidget {
     required this.pokemon,
     required this.evolutionUseCase,
     required this.onTapSpecies,
+    this.evolutionDetails = const [],
   });
 
   final PokemonDetail pokemon;
   final GetEvolutionChain evolutionUseCase;
   final ValueChanged<String> onTapSpecies;
+  final List<EvolutionDetail> evolutionDetails;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +52,7 @@ class EvolutionSection extends StatelessWidget {
             chain: preEvolutions,
             currentId: pokemon.speciesId,
             onTapSpecies: onTapSpecies,
+            evolutionDetails: evolutionDetails,
           ),
           const SizedBox(height: 12),
         ],
@@ -64,24 +68,43 @@ class EvolutionSection extends StatelessWidget {
             'Este Pokémon no tiene evoluciones posteriores.',
             style: TextStyle(color: Colors.white54, fontSize: 14),
           )
-        else
+        else if (forwardEvolutions.length == 1)
+          // Evolución lineal (ej: Charmander > Charmeleon > Charizard)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final chain in forwardEvolutions) ...[
-                  EvolutionChainRow(
+            child: EvolutionChainRow(
+              chain: [
+                if (currentNode != null) currentNode,
+                ...forwardEvolutions.first,
+              ],
+              currentId: pokemon.speciesId,
+              onTapSpecies: onTapSpecies,
+              evolutionDetails: evolutionDetails,
+            ),
+          )
+        else
+          // Evoluciones ramificadas (ej: Eevee > varios)
+          // Mostrar verticalmente
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (int i = 0; i < forwardEvolutions.length; i++) ...[
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: EvolutionChainRow(
                     chain: [
                       if (currentNode != null) currentNode,
-                      ...chain,
+                      ...forwardEvolutions[i],
                     ],
                     currentId: pokemon.speciesId,
                     onTapSpecies: onTapSpecies,
+                    evolutionDetails: evolutionDetails,
                   ),
-                  const SizedBox(width: 16),
-                ],
+                ),
+                if (i < forwardEvolutions.length - 1)
+                  const SizedBox(height: 12),
               ],
-            ),
+            ],
           ),
       ],
     );
