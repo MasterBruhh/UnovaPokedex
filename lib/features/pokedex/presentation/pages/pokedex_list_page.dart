@@ -38,6 +38,12 @@ class _PokedexListPageState extends ConsumerState<PokedexListPage> {
       _rotationAngle += delta * 0.01; // Controla la velocidad de rotación
       _scrollOffset = newOffset;
     });
+    
+    // Cargar más cuando estamos cerca del final
+    if (_scrollController.position.pixels >= 
+        _scrollController.position.maxScrollExtent - 300) {
+      ref.read(pokemonListProvider.notifier).loadMore();
+    }
   }
 
   @override
@@ -139,9 +145,14 @@ class _PokedexListPageState extends ConsumerState<PokedexListPage> {
               ListView.separated(
                 controller: _scrollController,
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
-                itemCount: state.filteredPokemon.length,
+                itemCount: state.filteredPokemon.length + (state.isLoadingMore || state.hasMore ? 1 : 0),
                 separatorBuilder: (context, index) => const SizedBox(height: 14),
                 itemBuilder: (context, index) {
+                  // Mostrar indicador de carga al final
+                  if (index >= state.filteredPokemon.length) {
+                    return _buildLoadMoreIndicator(state);
+                  }
+                  
                   final pokemon = state.filteredPokemon[index];
                   final region = PokemonRegion.fromPokemonId(pokemon.id);
 
@@ -155,6 +166,14 @@ class _PokedexListPageState extends ConsumerState<PokedexListPage> {
                 },
               ),
               _buildPokeballIndicator(),
+              // Progress indicator
+              if (state.totalCount != null)
+                Positioned(
+                  bottom: 16,
+                  left: 16,
+                  right: 16,
+                  child: _buildProgressBar(state),
+                ),
             ],
           )
         : Stack(
@@ -163,8 +182,13 @@ class _PokedexListPageState extends ConsumerState<PokedexListPage> {
                 scrollDirection: Axis.horizontal,
                 controller: _scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                itemCount: state.filteredPokemon.length,
+                itemCount: state.filteredPokemon.length + (state.isLoadingMore ? 1 : 0),
                 itemBuilder: (context, index) {
+                  // Mostrar indicador de carga al final
+                  if (index >= state.filteredPokemon.length) {
+                    return _buildLoadMoreIndicatorHorizontal();
+                  }
+                  
                   final pokemon = state.filteredPokemon[index];
                   final region = PokemonRegion.fromPokemonId(pokemon.id);
 
@@ -180,6 +204,89 @@ class _PokedexListPageState extends ConsumerState<PokedexListPage> {
               _buildPokeballIndicatorHorizontal(),
             ],
           );
+  }
+
+  /// Indicador de carga al final de la lista (portrait)
+  Widget _buildLoadMoreIndicator(PokemonListState state) {
+    if (state.isLoadingMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: SizedBox(
+            width: 32,
+            height: 32,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: Colors.white70,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    // Si hay más pero no está cargando, mostrar hint de scroll
+    if (state.hasMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Center(
+          child: Text(
+            'Desplaza para cargar más...',
+            style: TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+        ),
+      );
+    }
+    
+    return const SizedBox.shrink();
+  }
+
+  /// Indicador de carga al final de la lista (landscape)
+  Widget _buildLoadMoreIndicatorHorizontal() {
+    return Container(
+      width: 60,
+      margin: const EdgeInsets.only(left: 8),
+      alignment: Alignment.center,
+      child: const CircularProgressIndicator(
+        strokeWidth: 3,
+        color: Colors.white70,
+      ),
+    );
+  }
+
+  /// Barra de progreso mostrando cuántos Pokémon se han cargado
+  Widget _buildProgressBar(PokemonListState state) {
+    final loaded = state.allPokemon.length;
+    final total = state.totalCount ?? 1025;
+    final progress = (loaded / total).clamp(0.0, 1.0);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: Colors.white24,
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+                minHeight: 6,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '$loaded / $total',
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildScaledBookSpine({
@@ -404,27 +511,49 @@ class _PokedexListPageState extends ConsumerState<PokedexListPage> {
   }
 
   Widget _buildError(BuildContext context, String error) {
+    final state = ref.read(pokemonListProvider);
+    final friendlyMessage = state.userFriendlyError ?? 
+        'No se pudo cargar la Pokédex. Revisa tu conexión a internet y vuelve a intentar.';
+    
+    // Determinar icono según tipo de error
+    IconData errorIcon = Icons.error_outline;
+    if (error.contains('Network') || error.contains('connection')) {
+      errorIcon = Icons.wifi_off;
+    } else if (error.contains('Timeout')) {
+      errorIcon = Icons.access_time;
+    } else if (error.contains('Rate limit')) {
+      errorIcon = Icons.speed;
+    } else if (error.contains('Server')) {
+      errorIcon = Icons.cloud_off;
+    }
+    
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'No se pudo cargar la Pokédex. Revisa tu conexión a internet y vuelve a intentar.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white),
+            Icon(
+              errorIcon,
+              size: 64,
+              color: Colors.white54,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            Text(
+              friendlyMessage,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+            ),
+            const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () => ref.read(pokemonListProvider.notifier).retry(),
               icon: const Icon(Icons.refresh),
               label: const Text('Reintentar'),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              error,
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF1A6B5C),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
             ),
           ],
         ),

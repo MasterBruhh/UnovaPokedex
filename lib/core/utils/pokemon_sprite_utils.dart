@@ -14,5 +14,15 @@ class PokemonSpriteUtils {
   static String getArtworkUrl(int pokemonId) {
     return '${AppConstants.pokemonArtworkBaseUrl}/$pokemonId.png';
   }
+
+  /// Devuelve la URL del artwork oficial shiny para un Pokémon por ID
+  static String getShinyArtworkUrl(int pokemonId) {
+    return '${AppConstants.pokemonShinyArtworkBaseUrl}/$pokemonId.png';
+  }
+
+  /// Devuelve la URL del sprite shiny para un Pokémon por ID
+  static String getShinySpriteUrl(int pokemonId) {
+    return '${AppConstants.pokemonSpriteBaseUrl}/shiny/$pokemonId.png';
+  }
 }
 

@@ -7,6 +7,7 @@ class PokemonDetailDto {
   const PokemonDetailDto({
     required this.id,
     required this.speciesId,
+    required this.evolutionChainId,
     required this.name,
     required this.height,
     required this.weight,
@@ -16,10 +17,15 @@ class PokemonDetailDto {
     required this.description,
     required this.speciesChain,
     required this.moves,
+    required this.tmMoves,
+    required this.tutorMoves,
+    required this.eggMoves,
+    this.formSuffix,
   });
 
   final int id;
   final int speciesId;
+  final int evolutionChainId;
   final String name;
   final double height;
   final double weight;
@@ -29,6 +35,26 @@ class PokemonDetailDto {
   final String description;
   final List<PokemonSpeciesNodeDto> speciesChain;
   final List<PokemonMoveDto> moves;
+  final List<PokemonMoveDto> tmMoves;
+  final List<PokemonMoveDto> tutorMoves;
+  final List<PokemonMoveDto> eggMoves;
+  final String? formSuffix;
+
+  /// Parsea una lista de movimientos eliminando duplicados
+  static List<PokemonMoveDto> _parseMoves(List<dynamic>? movesJson, {bool hasLevel = false}) {
+    final moves = <PokemonMoveDto>[];
+    final seenMoves = <int>{};
+    for (final move in movesJson ?? []) {
+      final parsed = PokemonMoveDto.fromJson(
+        (move as Map).cast<String, dynamic>(),
+        hasLevel: hasLevel,
+      );
+      if (seenMoves.add(parsed.moveId)) {
+        moves.add(parsed);
+      }
+    }
+    return moves;
+  }
 
   /// Crea un DTO desde la respuesta JSON
   factory PokemonDetailDto.fromJson(Map<String, dynamic> json) {
@@ -50,6 +76,20 @@ class PokemonDetailDto {
 
     final spec = (json['pokemon_v2_pokemonspecy'] as Map<String, dynamic>?) ?? {};
     final speciesId = spec['id'] as int? ?? json['id'] as int;
+    final evolutionChainId = spec['evolution_chain_id'] as int? ?? 0;
+    
+    // Extraer sufijo de forma regional del nombre
+    final pokemonName = json['name'] as String;
+    String? formSuffix;
+    if (pokemonName.contains('-alola')) {
+      formSuffix = 'alola';
+    } else if (pokemonName.contains('-galar')) {
+      formSuffix = 'galar';
+    } else if (pokemonName.contains('-hisui')) {
+      formSuffix = 'hisui';
+    } else if (pokemonName.contains('-paldea')) {
+      formSuffix = 'paldea';
+    }
 
     final flavors = (spec['pokemon_v2_pokemonspeciesflavortexts'] as List? ?? [])
         .map((entry) => entry['flavor_text'] as String?)
@@ -57,7 +97,18 @@ class PokemonDetailDto {
         .map((text) => text.cleanApiText())
         .where((text) => text.isNotEmpty)
         .toList();
-    final description = flavors.isNotEmpty ? flavors.first : '';
+    
+    // Si es forma regional, agregar indicación a la descripción
+    String description = flavors.isNotEmpty ? flavors.first : '';
+    if (formSuffix != null) {
+      final regionName = {
+        'alola': 'Alola',
+        'galar': 'Galar',
+        'hisui': 'Hisui',
+        'paldea': 'Paldea',
+      }[formSuffix] ?? formSuffix;
+      description = '【Forma de $regionName】\n$description';
+    }
 
     final speciesChain = (spec['pokemon_v2_evolutionchain']?['pokemon_v2_pokemonspecies']
                 as List? ??
@@ -66,19 +117,15 @@ class PokemonDetailDto {
             PokemonSpeciesNodeDto.fromJson((node as Map).cast<String, dynamic>()))
         .toList();
 
-    final moves = <PokemonMoveDto>[];
-    final seenMoves = <int>{};
-    for (final move in json['pokemon_v2_pokemonmoves'] as List? ?? []) {
-      final parsed =
-          PokemonMoveDto.fromJson((move as Map).cast<String, dynamic>());
-      if (seenMoves.add(parsed.moveId)) {
-        moves.add(parsed);
-      }
-    }
+    // Parsear los diferentes tipos de movimientos
+    final levelUpMoves = _parseMoves(json['levelUpMoves'] as List?, hasLevel: true);
+    final tmMoves = _parseMoves(json['tmMoves'] as List?);
+    final tutorMoves = _parseMoves(json['tutorMoves'] as List?);
+    final eggMoves = _parseMoves(json['eggMoves'] as List?);
 
     return PokemonDetailDto(
       id: json['id'] as int,
-      name: json['name'] as String,
+      name: pokemonName,
       height: (json['height'] ?? 0).toDouble(),
       weight: (json['weight'] ?? 0).toDouble(),
       types: types,
@@ -86,8 +133,13 @@ class PokemonDetailDto {
       stats: stats,
       description: description,
       speciesChain: speciesChain,
-      moves: moves,
+      moves: levelUpMoves,
+      tmMoves: tmMoves,
+      tutorMoves: tutorMoves,
+      eggMoves: eggMoves,
       speciesId: speciesId,
+      evolutionChainId: evolutionChainId,
+      formSuffix: formSuffix,
     );
   }
 
@@ -96,6 +148,7 @@ class PokemonDetailDto {
     return PokemonDetail(
       id: id,
       speciesId: speciesId,
+      evolutionChainId: evolutionChainId,
       name: name,
       height: height,
       weight: weight,
@@ -103,8 +156,12 @@ class PokemonDetailDto {
       abilities: abilities.map((a) => a.toDomain()).toList(),
       stats: stats.map((s) => s.toDomain()).toList(),
       description: description,
-      evolutionChain: speciesChain.map((n) => n.toDomain()).toList(),
+      evolutionChain: speciesChain.map((n) => n.toDomain(formSuffix: formSuffix)).toList(),
       moves: moves.map((m) => m.toDomain()).toList(),
+      tmMoves: tmMoves.map((m) => m.toDomain()).toList(),
+      tutorMoves: tutorMoves.map((m) => m.toDomain()).toList(),
+      eggMoves: eggMoves.map((m) => m.toDomain()).toList(),
+      formSuffix: formSuffix,
     );
   }
 }
@@ -167,10 +224,10 @@ class PokemonMoveDto {
   final int level;
   final String name;
 
-  factory PokemonMoveDto.fromJson(Map<String, dynamic> json) {
+  factory PokemonMoveDto.fromJson(Map<String, dynamic> json, {bool hasLevel = false}) {
     return PokemonMoveDto(
       moveId: (json['move_id'] ?? -1) as int,
-      level: (json['level'] ?? 0) as int,
+      level: hasLevel ? ((json['level'] ?? 0) as int) : 0,
       name: ((json['pokemon_v2_move']?['name'] as String?) ?? '')
           .replaceAll('-', ' '),
     );
@@ -187,25 +244,71 @@ class PokemonSpeciesNodeDto {
     required this.id,
     required this.name,
     this.evolvesFromSpeciesId,
+    this.pokemons = const [],
   });
 
   final int id;
   final String name;
   final int? evolvesFromSpeciesId;
+  final List<PokemonVariantDto> pokemons; // Pokémon de esta especie
 
   factory PokemonSpeciesNodeDto.fromJson(Map<String, dynamic> json) {
+    final pokemonsList = (json['pokemon_v2_pokemons'] as List? ?? [])
+        .map((p) => PokemonVariantDto.fromJson((p as Map).cast<String, dynamic>()))
+        .toList();
+    
     return PokemonSpeciesNodeDto(
       id: json['id'] as int,
       name: json['name'] as String,
       evolvesFromSpeciesId: json['evolves_from_species_id'] as int?,
+      pokemons: pokemonsList,
     );
   }
 
-  EvolutionNode toDomain() {
+  /// Obtiene el pokemonId para un sufijo regional específico
+  int? getPokemonIdForSuffix(String? suffix) {
+    if (suffix == null) return null;
+    final regionalName = '$name-$suffix';
+    final match = pokemons.cast<PokemonVariantDto?>().firstWhere(
+      (p) => p?.name == regionalName,
+      orElse: () => null,
+    );
+    return match?.id;
+  }
+
+  /// Verifica si existe una forma regional para este sufijo
+  bool hasRegionalForm(String? suffix) {
+    if (suffix == null) return false;
+    final regionalName = '$name-$suffix';
+    return pokemons.any((p) => p.name == regionalName);
+  }
+
+  EvolutionNode toDomain({String? formSuffix}) {
+    // Solo aplicar el sufijo si la forma regional existe
+    final hasRegional = hasRegionalForm(formSuffix);
+    final effectiveName = hasRegional ? '$name-$formSuffix' : name;
+    final pokemonId = hasRegional ? getPokemonIdForSuffix(formSuffix) : null;
+    
     return EvolutionNode(
       id: id,
-      name: name,
+      name: effectiveName,
       evolvesFromId: evolvesFromSpeciesId,
+      pokemonId: pokemonId,
+    );
+  }
+}
+
+/// DTO para variantes de pokémon dentro de una especie
+class PokemonVariantDto {
+  const PokemonVariantDto({required this.id, required this.name});
+  
+  final int id;
+  final String name;
+  
+  factory PokemonVariantDto.fromJson(Map<String, dynamic> json) {
+    return PokemonVariantDto(
+      id: json['id'] as int,
+      name: json['name'] as String,
     );
   }
 }

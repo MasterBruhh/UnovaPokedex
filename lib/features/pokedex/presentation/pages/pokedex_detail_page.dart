@@ -4,20 +4,21 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/share_utils.dart';
 import '../../../../core/utils/string_extensions.dart';
+import '../../../../core/widgets/animated_favorite_button.dart';
 import '../../../../core/widgets/cyan_grid_background.dart';
 import '../../../../core/widgets/frosted_icon_button.dart';
 import '../../../../core/widgets/loading_indicator.dart';
 import '../../domain/entities/pokemon.dart';
+import '../../domain/entities/pokemon_detail.dart';
 import '../providers/favorites_provider.dart';
 import '../providers/pokedex_providers.dart';
 import '../providers/pokemon_detail_provider.dart';
-import '../widgets/pokemon_detail/evolution_section.dart';
-import '../widgets/pokemon_detail/pokemon_abilities_card.dart';
+import '../widgets/pokemon_detail/combat_tab_content.dart';
+import '../widgets/pokemon_detail/description_tab_content.dart';
+import '../widgets/pokemon_detail/detail_tab_bar.dart';
+import '../widgets/pokemon_detail/forms_tab_content.dart';
 import '../widgets/pokemon_detail/pokemon_header_card.dart';
-import '../widgets/pokemon_detail/pokemon_info_card.dart';
-import '../widgets/pokemon_detail/pokemon_moves_card.dart';
 import '../widgets/pokemon_detail/pokemon_share_card.dart';
-import '../widgets/pokemon_detail/pokemon_stats_card.dart';
 
 /// Página que muestra información detallada sobre un Pokémon.
 /// Convertido a ConsumerStatefulWidget para manejar el GlobalKey de la captura.
@@ -41,6 +42,9 @@ class PokedexDetailPage extends ConsumerStatefulWidget { // CORREGIDO AQUÍ
 class _PokedexDetailPageState extends ConsumerState<PokedexDetailPage> {
   // Key global para identificar el widget que queremos capturar como imagen
   final GlobalKey _shareCardKey = GlobalKey();
+  
+  // Pestaña seleccionada actualmente
+  DetailTab _selectedTab = DetailTab.descripcion;
 
   @override
   Widget build(BuildContext context) {
@@ -131,9 +135,9 @@ class _PokedexDetailPageState extends ConsumerState<PokedexDetailPage> {
                             tooltip: 'Compartir tarjeta',
                           ),
                           const SizedBox(width: 8),
-                          // Botón Favoritos
-                          FrostedIconButton(
-                            icon: isFav ? Icons.favorite : Icons.favorite_border,
+                          // Botón Favoritos con animación
+                          AnimatedFavoriteButton(
+                            isFavorite: isFav,
                             onPressed: () {
                               final pokemonSummary = Pokemon(
                                 id: details.id,
@@ -173,7 +177,7 @@ class _PokedexDetailPageState extends ConsumerState<PokedexDetailPage> {
   Widget _buildDetail(
       BuildContext context,
       WidgetRef ref,
-      pokemon,
+      PokemonDetail pokemon,
       ) {
     final evolutionUseCase = ref.read(getEvolutionChainUseCaseProvider);
 
@@ -182,47 +186,55 @@ class _PokedexDetailPageState extends ConsumerState<PokedexDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Header card con imagen, nombre, tipos, altura y peso
           PokemonHeaderCard(pokemon: pokemon),
           const SizedBox(height: 16),
-          if (pokemon.description.isNotEmpty)
-            PokemonInfoCard(
-              title: 'Descripción',
-              child: Text(
-                pokemon.description,
-                style: const TextStyle(color: Colors.white, height: 1.5),
-              ),
-            ),
-          const SizedBox(height: 16),
-          PokemonInfoCard(
-            title: 'Habilidades',
-            child: PokemonAbilitiesCard(abilities: pokemon.abilities),
+          
+          // Barra de pestañas
+          DetailTabBar(
+            selectedTab: _selectedTab,
+            onTabSelected: (tab) {
+              setState(() {
+                _selectedTab = tab;
+              });
+            },
           ),
           const SizedBox(height: 16),
-          PokemonInfoCard(
-            title: 'Estadísticas Base',
-            child: PokemonStatsCard(stats: pokemon.stats),
-          ),
-          const SizedBox(height: 16),
-          if (pokemon.evolutionChain.isNotEmpty)
-            PokemonInfoCard(
-              title: 'Evoluciones',
-              child: EvolutionSection(
-                pokemon: pokemon,
-                evolutionUseCase: evolutionUseCase,
-                onTapSpecies: (name) => context.push(
-                  '/pokedex/${Uri.encodeComponent(name)}',
-                ),
-              ),
-            ),
-          const SizedBox(height: 16),
-          PokemonInfoCard(
-            title: 'Movimientos por Nivel',
-            child: PokemonMovesCard(moves: pokemon.moves),
-          ),
+          
+          // Contenido según la pestaña seleccionada
+          _buildTabContent(context, pokemon, evolutionUseCase),
+          
           const SizedBox(height: 48),
         ],
       ),
     );
+  }
+
+  Widget _buildTabContent(
+    BuildContext context,
+    PokemonDetail pokemon,
+    evolutionUseCase,
+  ) {
+    switch (_selectedTab) {
+      case DetailTab.descripcion:
+        return DescriptionTabContent(pokemon: pokemon);
+      case DetailTab.formas:
+        return FormsTabContent(
+          pokemon: pokemon,
+          evolutionUseCase: evolutionUseCase,
+          onTapSpecies: (name) => context.pushReplacement(
+            '/pokedex/${Uri.encodeComponent(name)}',
+          ),
+          onTapForm: (form) {
+            // Navegar al detalle de la forma usando su nombre
+            context.pushReplacement(
+              '/pokedex/${Uri.encodeComponent(form.name)}',
+            );
+          },
+        );
+      case DetailTab.combate:
+        return CombatTabContent(pokemon: pokemon);
+    }
   }
 
   Widget _buildError(BuildContext context, WidgetRef ref, String error) {
