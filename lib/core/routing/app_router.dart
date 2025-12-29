@@ -7,6 +7,9 @@ import '../../features/pokedex/presentation/pages/pokedex_list_page.dart';
 import '../../features/pokedex/presentation/pages/pokedex_detail_page.dart';
 import '../../features/maps/presentation/pages/region_selection_page.dart';
 import '../../features/maps/presentation/pages/interactive_map_page.dart';
+import '../../features/trivia/presentation/pages/trivia_home_page.dart';
+import '../../features/trivia/presentation/pages/trivia_game_page.dart';
+import '../../features/trivia/presentation/pages/trivia_game_over_page.dart';
 import 'session_manager.dart';
 
 /// Observador de rutas para rastrear la navegación
@@ -123,6 +126,27 @@ class AppRouter {
           builder: (context, state) {
             final regionName = state.pathParameters['region'] ?? 'kanto';
             return InteractiveMapPage(regionName: regionName);
+          },
+        ),
+        // -------------------------------
+
+        // --- Rutas de Trivia ---
+        GoRoute(
+          path: '/trivia',
+          name: 'trivia',
+          builder: (context, state) => const TriviaHomePage(),
+        ),
+        GoRoute(
+          path: '/trivia/game',
+          name: 'trivia_game',
+          builder: (context, state) => const TriviaGamePage(),
+        ),
+        GoRoute(
+          path: '/trivia/game-over/:score',
+          name: 'trivia_game_over',
+          builder: (context, state) {
+            final score = int.tryParse(state.pathParameters['score'] ?? '0') ?? 0;
+            return TriviaGameOverPage(score: score);
           },
         ),
         // -------------------------------

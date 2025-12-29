@@ -48,11 +48,9 @@ class _MainMenuPageState extends State<MainMenuPage> {
             ),
             _TileSpec(
               title: 'Trivia',
-              icon: Icons.article,
+              icon: Icons.quiz,
               height: columnWidth * 1.2,
-              onTap: () {
-                // TODO: Implement trivia feature
-              },
+              onTap: () => context.pushNamed('trivia'),
             ),
 
             // --- PASO 6: Botón de Acceso a Favoritos ---

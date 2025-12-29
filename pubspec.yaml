@@ -25,6 +25,8 @@ dependencies:
   #dependencias para compartir
   path_provider: ^2.1.1
   share_plus: ^10.0.0
+  # Caché de imágenes para Trivia
+  cached_network_image: ^3.3.1
 
 dev_dependencies:
   flutter_test:
