@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/graphql/graphql_client_provider.dart';
@@ -6,36 +7,44 @@ import '../../domain/entities/question.dart';
 import '../../data/services/trivia_service.dart';
 import '../../data/repositories/trivia_repository.dart';
 
+// ==========================================
+// Provider para el Idioma (Locale)
+// ==========================================
+class LocaleNotifier extends Notifier<Locale> {
+  @override
+  Locale build() {
+    // Idioma por defecto
+    return const Locale('es');
+  }
+
+  void setLocale(Locale locale) {
+    state = locale;
+  }
+
+  void toggleLocale() {
+    state = state.languageCode == 'es'
+        ? const Locale('en')
+        : const Locale('es');
+  }
+}
+
+final localeProvider = NotifierProvider<LocaleNotifier, Locale>(
+  LocaleNotifier.new,
+);
+
+// ==========================================
+// Estados y Lógica del Juego
+// ==========================================
+
 /// Enum que representa el estado actual del juego de trivia.
 enum TriviaState {
-  /// Estado inicial antes de que comience el juego
-  initial,
-  
-  /// Cargando una nueva pregunta
-  loading,
-  
-  /// Pregunta lista y esperando input del usuario
-  playing,
-  
-  /// Usuario seleccionó una respuesta, mostrando resultado
-  answered,
-  
-  /// Juego terminado (respuesta incorrecta seleccionada)
-  gameOver,
-  
-  /// Ocurrió un error
-  error,
+  initial, loading, playing, answered, gameOver, error,
 }
 
-/// Enum para estados visuales de los botones de opción.
 enum OptionState {
-  normal,
-  correct,
-  wrong,
-  disabled,
+  normal, correct, wrong, disabled,
 }
 
-/// Modelo de estado para el juego de trivia.
 class TriviaGameState {
   final TriviaState state;
   final Question? currentQuestion;
@@ -75,37 +84,25 @@ class TriviaGameState {
     );
   }
 
-  /// Obtiene el estado de una opción específica para propósitos de estilo.
   OptionState getOptionState(TriviaPokemon option) {
-    if (state != TriviaState.answered) {
-      return OptionState.normal;
-    }
-
-    if (currentQuestion?.isCorrect(option) ?? false) {
-      return OptionState.correct;
-    }
-
-    if (selectedAnswer?.id == option.id) {
-      return OptionState.wrong;
-    }
-
+    if (state != TriviaState.answered) return OptionState.normal;
+    if (currentQuestion?.isCorrect(option) ?? false) return OptionState.correct;
+    if (selectedAnswer?.id == option.id) return OptionState.wrong;
     return OptionState.disabled;
   }
 }
 
-/// Provider para el servicio de trivia.
+// Providers de Dependencias
 final triviaServiceProvider = Provider<TriviaService>((ref) {
   final clientNotifier = ref.watch(graphqlClientProvider);
   return TriviaService(clientNotifier.value);
 });
 
-/// Provider para el repositorio de trivia.
 final triviaRepositoryProvider = Provider<TriviaRepository>((ref) {
   final service = ref.watch(triviaServiceProvider);
   return TriviaRepository(service);
 });
 
-/// Notifier para gestionar el estado del juego de trivia.
 class TriviaNotifier extends Notifier<TriviaGameState> {
   @override
   TriviaGameState build() {
@@ -114,7 +111,6 @@ class TriviaNotifier extends Notifier<TriviaGameState> {
 
   TriviaRepository get _repository => ref.read(triviaRepositoryProvider);
 
-  /// Inicia un nuevo juego, reiniciando puntuación y cargando primera pregunta.
   Future<void> startGame() async {
     state = const TriviaGameState(
       state: TriviaState.loading,
@@ -123,7 +119,6 @@ class TriviaNotifier extends Notifier<TriviaGameState> {
     await _loadNextQuestion();
   }
 
-  /// Carga la siguiente pregunta.
   Future<void> _loadNextQuestion() async {
     state = state.copyWith(
       state: TriviaState.loading,
@@ -133,7 +128,14 @@ class TriviaNotifier extends Notifier<TriviaGameState> {
     );
 
     try {
-      final question = await _repository.generateRandomQuestion();
+      // 1. LEER EL IDIOMA ACTUAL
+      final currentLocale = ref.read(localeProvider);
+      final languageCode = currentLocale.languageCode;
+
+      // 2. PASARLO AL REPOSITORIO (CORRECCIÓN AQUÍ)
+      // Antes no estabas pasando el parámetro, por eso siempre salía español.
+      final question = await _repository.generateRandomQuestion(languageCode: languageCode);
+
       state = state.copyWith(
         state: TriviaState.playing,
         currentQuestion: question,
@@ -147,14 +149,11 @@ class TriviaNotifier extends Notifier<TriviaGameState> {
     }
   }
 
-  /// Envía una respuesta para la pregunta actual.
   Future<void> submitAnswer(TriviaPokemon selectedPokemon) async {
-    if (state.state != TriviaState.playing || state.currentQuestion == null) {
-      return;
-    }
+    if (state.state != TriviaState.playing || state.currentQuestion == null) return;
 
     final isCorrect = state.currentQuestion!.isCorrect(selectedPokemon);
-    
+
     state = state.copyWith(
       state: TriviaState.answered,
       selectedAnswer: selectedPokemon,
@@ -162,7 +161,6 @@ class TriviaNotifier extends Notifier<TriviaGameState> {
       isRevealed: true,
     );
 
-    // Esperar para la animación de revelación
     await Future.delayed(const Duration(milliseconds: 1500));
 
     if (isCorrect) {
@@ -173,18 +171,15 @@ class TriviaNotifier extends Notifier<TriviaGameState> {
     }
   }
 
-  /// Reinicia el juego al estado inicial.
   void resetGame() {
     state = const TriviaGameState();
   }
 
-  /// Reintenta cargar la pregunta actual después de un error.
   Future<void> retryLoad() async {
     await _loadNextQuestion();
   }
 }
 
-/// Provider principal para el estado del juego de trivia.
 final triviaProvider = NotifierProvider<TriviaNotifier, TriviaGameState>(
   TriviaNotifier.new,
 );

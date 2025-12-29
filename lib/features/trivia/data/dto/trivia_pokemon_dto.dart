@@ -1,9 +1,7 @@
+import 'dart:convert';
 import '../../domain/entities/trivia_pokemon.dart';
 
 /// Data Transfer Object para datos de Pokémon de la API GraphQL.
-/// 
-/// Esta clase maneja el mapeo entre la respuesta cruda de GraphQL
-/// y la entidad de dominio [TriviaPokemon].
 class TriviaPokemonDto {
   final int id;
   final String name;
@@ -17,72 +15,112 @@ class TriviaPokemonDto {
     this.spriteUrl,
   });
 
-  /// Crea un TriviaPokemonDto desde una respuesta JSON de GraphQL.
-  /// 
-  /// Estructura JSON esperada:
-  /// ```json
-  /// {
-  ///   "id": 25,
-  ///   "name": "pikachu",
-  ///   "pokemon_v2_pokemonsprites": [{"sprites": "..."}],
-  ///   "pokemon_v2_pokemonspecy": {
-  ///     "pokemon_v2_pokemonspeciesflavortexts": [{"flavor_text": "..."}]
-  ///   }
-  /// }
-  /// ```
-  factory TriviaPokemonDto.fromJson(Map<String, dynamic> json) {
-    String? description;
-    
-    // Extraer descripción de los flavor texts de la especie
-    final specy = json['pokemon_v2_pokemonspecy'];
-    if (specy != null) {
-      final flavorTexts = specy['pokemon_v2_pokemonspeciesflavortexts'] as List?;
-      if (flavorTexts != null && flavorTexts.isNotEmpty) {
-        description = flavorTexts[0]['flavor_text'] as String?;
+  factory TriviaPokemonDto.fromJson(Map<String, dynamic> json, {String? descriptionOverride}) {
+    final pokemonId = json['id'] as int;
+
+    // 1. Lógica de Descripción (Igual que antes)
+    String? finalDescription = descriptionOverride;
+
+    if (finalDescription == null || finalDescription.isEmpty) {
+      final specy = json['pokemon_v2_pokemonspecy'];
+      if (specy != null) {
+        final flavorTexts = specy['pokemon_v2_pokemonspeciesflavortexts'] as List?;
+
+        if (flavorTexts != null && flavorTexts.isNotEmpty) {
+          var targetEntry = flavorTexts.firstWhere(
+                (entry) => entry['language_id'] == 7,
+            orElse: () => null,
+          );
+
+          targetEntry ??= flavorTexts.firstWhere(
+                (entry) => entry['language_id'] == 9,
+            orElse: () => flavorTexts.first,
+          );
+
+          if (targetEntry != null) {
+            finalDescription = targetEntry['flavor_text'] as String?;
+          }
+        }
       }
     }
 
+    if (finalDescription != null) {
+      finalDescription = finalDescription
+          .replaceAll('\n', ' ')
+          .replaceAll('\f', ' ')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .replaceAll('POKéMON', 'Pokémon')
+          .trim();
+    }
+
+    // 2. Lógica de Sprites (MEJORADA)
+    String? finalSpriteUrl;
+
+    // Intento 1: Leer desde la API (Parseo del JSON string)
+    final spritesList = json['pokemon_v2_pokemonsprites'] as List?;
+    if (spritesList != null && spritesList.isNotEmpty) {
+      final spriteString = spritesList[0]['sprites'];
+      if (spriteString != null) {
+        try {
+          final spriteMap = jsonDecode(spriteString);
+          // Intentamos obtener el arte oficial primero, si no el sprite normal
+          final other = spriteMap['other'];
+          if (other != null && other['official-artwork'] != null) {
+            finalSpriteUrl = other['official-artwork']['front_default'];
+          }
+
+          if (finalSpriteUrl == null) {
+            finalSpriteUrl = spriteMap['front_default'];
+          }
+        } catch (e) {
+          // Si falla el parseo, ignoramos y pasamos al Plan B
+        }
+      }
+    }
+
+    // Intento 2 (PLAN B - INFALIBLE): Construir la URL manualmente usando el ID
+    // Esto asegura que la imagen SIEMPRE cargue si tenemos el ID.
+    if (finalSpriteUrl == null || finalSpriteUrl.isEmpty) {
+      finalSpriteUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$pokemonId.png';
+    }
+
     return TriviaPokemonDto(
-      id: json['id'] as int,
+      id: pokemonId,
       name: json['name'] as String,
-      description: description,
-      spriteUrl: null, // Se generará desde el ID
+      description: finalDescription,
+      spriteUrl: finalSpriteUrl,
     );
   }
 
-  /// Crea un TriviaPokemonDto simple desde una respuesta GraphQL básica.
-  /// 
-  /// Usado para parsear opciones de Pokémon que no necesitan detalles completos.
+  /// Crea un TriviaPokemonDto simple
   factory TriviaPokemonDto.fromSimpleJson(Map<String, dynamic> json) {
+    final id = json['id'] as int;
+    // También aplicamos la URL manual aquí para las opciones de respuesta
     return TriviaPokemonDto(
-      id: json['id'] as int,
-      name: json['name'] as String,
-    );
-  }
-
-  /// Convierte este DTO a una entidad de dominio [TriviaPokemon].
-  TriviaPokemon toEntity() {
-    return TriviaPokemon.withSpriteUrl(
       id: id,
-      name: name,
-      description: description,
+      name: json['name'] as String,
+      spriteUrl: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png',
+      description: null,
     );
   }
 
-  /// Convierte una lista de objetos JSON a una lista de TriviaPokemonDto.
+  TriviaPokemon toEntity() {
+    return TriviaPokemon(
+      id: id,
+      name: _capitalize(name),
+      description: description ?? '',
+      spriteUrl: spriteUrl ?? '',
+    );
+  }
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1);
+  }
+
   static List<TriviaPokemonDto> fromJsonList(List<dynamic> jsonList) {
     return jsonList
         .map((json) => TriviaPokemonDto.fromSimpleJson(json as Map<String, dynamic>))
         .toList();
-  }
-
-  /// Convierte este DTO a JSON (para testing/debugging).
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'description': description,
-      'spriteUrl': spriteUrl,
-    };
   }
 }
