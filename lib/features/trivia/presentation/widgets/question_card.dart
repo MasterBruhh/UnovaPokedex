@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
+// 1. IMPORTAR L10N
+import 'package:pokedex/l10n/app_localizations.dart';
 
 import '../../theme/trivia_colors.dart';
 import '../../domain/entities/question.dart';
 import '../../domain/enums/question_type.dart';
 
-/// Widget de tarjeta que muestra el contenido de la pregunta.
-/// 
-/// Para preguntas de silueta, muestra el texto de la pregunta.
-/// Para preguntas de descripción, muestra la descripción del Pokémon.
 class QuestionCard extends StatelessWidget {
-  /// La pregunta a mostrar
   final Question question;
 
   const QuestionCard({
@@ -19,6 +16,9 @@ class QuestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 2. OBTENER TRADUCCIONES
+    final l10n = AppLocalizations.of(context)!;
+
     return Card(
       elevation: 8,
       shape: RoundedRectangleBorder(
@@ -41,7 +41,6 @@ class QuestionCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Ícono del tipo de pregunta
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -55,10 +54,10 @@ class QuestionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
-            // Título de la pregunta
+
+            // 3. CAMBIO AQUÍ: Usar traducción en lugar de texto fijo
             Text(
-              question.questionText,
+              _getLocalizedTitle(l10n), // Usamos función auxiliar
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -66,8 +65,7 @@ class QuestionCard extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-            
-            // Descripción (solo para preguntas de tipo descripción)
+
             if (question.type == QuestionType.description) ...[
               const SizedBox(height: 16),
               Container(
@@ -80,7 +78,7 @@ class QuestionCard extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  question.description,
+                  question.description, // Esta descripción sí viene de la API/Repository
                   style: const TextStyle(
                     fontSize: 16,
                     height: 1.5,
@@ -103,6 +101,16 @@ class QuestionCard extends StatelessWidget {
         return Icons.visibility_off;
       case QuestionType.description:
         return Icons.description;
+    }
+  }
+
+  // 4. FUNCIÓN PARA OBTENER TÍTULO TRADUCIDO
+  String _getLocalizedTitle(AppLocalizations l10n) {
+    switch (question.type) {
+      case QuestionType.silhouette:
+        return l10n.modeSilhouetteTitle; // "¿Quién es ese Pokémon?"
+      case QuestionType.description:
+        return l10n.modeDescriptionTitle; // "Desafío de descripción"
     }
   }
 }

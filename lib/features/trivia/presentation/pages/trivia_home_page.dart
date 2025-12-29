@@ -1,56 +1,86 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pokedex/l10n/app_localizations.dart';
 
-import '../../../../core/widgets/yellow_grid_background.dart';
 import '../../theme/trivia_colors.dart';
+import '../providers/trivia_provider.dart';
 
-/// Pantalla de inicio del módulo de Trivia.
-/// 
-/// Muestra el título del juego, descripción de los modos y botón de inicio.
-class TriviaHomePage extends StatelessWidget {
+class TriviaHomePage extends ConsumerWidget {
   const TriviaHomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    // Leer el idioma actual del provider
+    final currentLocale = ref.watch(localeProvider);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF8B7500),
-      body: Stack(
-        children: [
-          const Positioned.fill(child: YellowGridBackground()),
-          SafeArea(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: TriviaColors.backgroundGradient,
+        ),
+        child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Botón de regreso
-                Align(
-                  alignment: Alignment.topLeft,
-                  child: IconButton(
-                    onPressed: () => context.pop(),
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    iconSize: 28,
-                  ),
+                // Fila superior: Botón Atrás y Selector de Idioma
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      onPressed: () => context.pop(),
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      iconSize: 28,
+                    ),
+
+                    // BOTONES DE IDIOMA
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _LanguageButton(
+                            label: 'ES',
+                            isSelected: currentLocale.languageCode == 'es',
+                            onTap: () => ref.read(localeProvider.notifier).setLocale(const Locale('es')),
+                          ),
+                          _LanguageButton(
+                            label: 'EN',
+                            isSelected: currentLocale.languageCode == 'en',
+                            onTap: () => ref.read(localeProvider.notifier).setLocale(const Locale('en')),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                
+
                 const Spacer(),
-                
-                // Ícono de Pokéball
+
+                // Ícono
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.catching_pokemon,
                     size: 100,
-                    color: TriviaColors.accent,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 32),
-                
-                // Título
+
+                // Títulos
                 const Text(
                   'Pokémon',
                   style: TextStyle(
@@ -67,9 +97,9 @@ class TriviaHomePage extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Text(
-                  'TRIVIA',
-                  style: TextStyle(
+                Text(
+                  l10n.triviaTitle, // TRADUCIDO
+                  style: const TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.w300,
                     color: TriviaColors.accent,
@@ -84,7 +114,7 @@ class TriviaHomePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Subtítulo
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -92,18 +122,19 @@ class TriviaHomePage extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    '¡Pon a prueba tu conocimiento Pokémon!',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.triviaSubtitle, // TRADUCIDO
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
                       fontSize: 16,
                       color: Colors.white,
                     ),
                   ),
                 ),
-                
+
                 const Spacer(),
-                
-                // Descripción de modos de juego
+
+                // Modos
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -114,22 +145,22 @@ class TriviaHomePage extends StatelessWidget {
                     children: [
                       _buildModeItem(
                         Icons.visibility_off,
-                        "¿Quién es ese Pokémon?",
-                        'Adivina por la silueta',
+                        l10n.modeSilhouetteTitle, // TRADUCIDO
+                        l10n.modeSilhouetteSubtitle,
                       ),
                       const SizedBox(height: 12),
                       _buildModeItem(
                         Icons.description,
-                        'Desafío de descripción',
-                        'Identifica por la entrada del Pokédex',
+                        l10n.modeDescriptionTitle, // TRADUCIDO
+                        l10n.modeDescriptionSubtitle,
                       ),
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 32),
-                
-                // Botón de inicio
+
+                // Botón Iniciar
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -143,14 +174,14 @@ class TriviaHomePage extends StatelessWidget {
                       ),
                       elevation: 8,
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.play_arrow, size: 28),
-                        SizedBox(width: 8),
+                        const Icon(Icons.play_arrow, size: 28),
+                        const SizedBox(width: 8),
                         Text(
-                          'INICIAR JUEGO',
-                          style: TextStyle(
+                          l10n.startGame, // TRADUCIDO
+                          style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 2,
@@ -160,12 +191,12 @@ class TriviaHomePage extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
               ],
             ),
           ),
-          )],
+        ),
       ),
     );
   }
@@ -201,14 +232,48 @@ class TriviaHomePage extends StatelessWidget {
               Text(
                 subtitle,
                 style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 12,
+                  color: Colors.white.withValues(alpha: 0.7),
                 ),
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+// Widget auxiliar para los botones de idioma
+class _LanguageButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _LanguageButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isSelected ? TriviaColors.textPrimary : Colors.white,
+          ),
+        ),
+      ),
     );
   }
 }
