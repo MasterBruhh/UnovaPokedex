@@ -34,6 +34,12 @@ class PokedexRepositoryImpl implements PokedexRepository {
   }
 
   @override
+  Future<List<Pokemon>> getAllPokemon() async {
+    final dtos = await _remoteDatasource.fetchAllPokemon();
+    return dtos.map((dto) => dto.toDomain()).toList();
+  }
+
+  @override
   Future<PokemonDetail> getPokemonDetail({int? id, String? name}) async {
     final dto = await _remoteDatasource.fetchPokemonDetail(id: id, name: name);
     return dto.toDomain();

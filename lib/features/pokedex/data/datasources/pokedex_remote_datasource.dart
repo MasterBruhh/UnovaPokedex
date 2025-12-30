@@ -75,6 +75,29 @@ class PokedexRemoteDatasource {
     return result.data?['pokemon_v2_pokemon_aggregate']?['aggregate']?['count'] as int? ?? 0;
   }
 
+  /// Obtiene TODOS los Pokémon sin paginación (para filtrado)
+  Future<List<PokemonSummaryDto>> fetchAllPokemon() async {
+    final result = await _client.query(
+      QueryOptions(
+        document: gql(getAllPokemonQuery),
+        fetchPolicy: FetchPolicy.cacheFirst,
+      ),
+    ).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => throw const PokedexTimeoutException(),
+    );
+
+    if (result.hasException) {
+      throw _handleException(result.exception!);
+    }
+
+    final data = result.data?['pokemon_v2_pokemon'] as List? ?? [];
+    return data
+        .map((json) =>
+            PokemonSummaryDto.fromJson((json as Map).cast<String, dynamic>()))
+        .toList(growable: false);
+  }
+
   /// Obtiene información detallada para un Pokémon específico
   /// Se debe proporcionar [id] o [name]
   Future<PokemonDetailDto> fetchPokemonDetail({int? id, String? name}) async {

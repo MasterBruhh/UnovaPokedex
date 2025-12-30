@@ -1,3 +1,4 @@
+import '../entities/pokemon.dart';
 import '../entities/pokemon_page.dart';
 import '../repositories/pokedex_repository.dart';
 
@@ -17,6 +18,11 @@ class GetPokemonList {
   /// Obtiene el conteo total de Pokémon
   Future<int> getCount() async {
     return await _repository.getPokemonCount();
+  }
+
+  /// Obtiene TODOS los Pokémon sin paginación (para filtrado)
+  Future<List<Pokemon>> getAll() async {
+    return await _repository.getAllPokemon();
   }
 }
 

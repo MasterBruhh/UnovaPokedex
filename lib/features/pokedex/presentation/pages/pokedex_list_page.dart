@@ -53,9 +53,6 @@ class _PokedexListPageState extends ConsumerState<PokedexListPage> {
   }
 
   void _openFilterSheet(BuildContext context) {
-    final state = ref.read(pokemonListProvider);
-    final notifier = ref.read(pokemonListProvider.notifier);
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -63,13 +60,30 @@ class _PokedexListPageState extends ConsumerState<PokedexListPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) => FilterBottomSheet(
-        searchText: state.searchText,
-        selectedTypes: state.selectedTypes,
-        selectedRegions: state.selectedRegions,
-        onSearchChanged: (text) => notifier.setSearchText(text),
-        onTypeToggled: (type) => notifier.toggleTypeFilter(type),
-        onRegionToggled: (region) => notifier.toggleRegionFilter(region),
+      builder: (ctx) => Consumer(
+        builder: (context, ref, _) {
+          final state = ref.watch(pokemonListProvider);
+          final notifier = ref.read(pokemonListProvider.notifier);
+          
+          return DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.9,
+            expand: false,
+            builder: (context, scrollController) => FilterBottomSheet(
+              searchText: state.searchText,
+              selectedTypes: state.selectedTypes,
+              selectedRegions: state.selectedRegions,
+              sortOption: state.sortOption,
+              isLoadingAll: state.isLoadingAll,
+              onSearchChanged: (text) => notifier.setSearchText(text),
+              onTypeToggled: (type) => notifier.toggleTypeFilter(type),
+              onRegionToggled: (region) => notifier.toggleRegionFilter(region),
+              onSortChanged: (option) => notifier.setSortOption(option),
+              onClearFilters: () => notifier.clearFilters(),
+            ),
+          );
+        },
       ),
     );
   }
@@ -101,11 +115,61 @@ class _PokedexListPageState extends ConsumerState<PokedexListPage> {
                   ),
                   const SizedBox(width: 8),
                   CounterPill(count: state.filteredPokemon.length),
+                  // Indicador de filtros activos
+                  if (state.hasFiltersActive)
+                    Container(
+                      margin: const EdgeInsets.only(left: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.filter_alt, size: 14, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text(
+                            'Filtrado',
+                            style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
                   const Spacer(),
-                  FrostedIconButton(
-                    icon: Icons.filter_list_rounded,
-                    onPressed: () => _openFilterSheet(context),
-                    tooltip: 'Filtros',
+                  // Indicador de carga de todos los Pokémon
+                  if (state.isLoadingAll)
+                    Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      width: 24,
+                      height: 24,
+                      child: const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                  // Botón de filtros con badge si hay filtros activos
+                  Stack(
+                    children: [
+                      FrostedIconButton(
+                        icon: Icons.filter_list_rounded,
+                        onPressed: () => _openFilterSheet(context),
+                        tooltip: 'Filtros',
+                      ),
+                      if (state.hasFiltersActive)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: const BoxDecoration(
+                              color: Colors.orange,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),

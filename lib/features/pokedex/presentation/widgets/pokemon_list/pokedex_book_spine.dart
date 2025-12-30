@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/utils/pokemon_sprite_utils.dart';
 import '../../../../../core/utils/string_extensions.dart';
+import '../../../../../core/widgets/pokemon_sprite_image.dart';
 import '../../../domain/entities/pokemon_region.dart';
 import '../../../domain/entities/pokemon_type.dart';
 import 'region_color_bar.dart';
@@ -17,6 +18,7 @@ class PokedexBookSpine extends StatelessWidget {
     required this.region,
     required this.onTap,
     this.opacity = 1.0,
+    this.spriteUrl,
   });
 
   final int id;
@@ -25,9 +27,13 @@ class PokedexBookSpine extends StatelessWidget {
   final PokemonRegion region;
   final VoidCallback onTap;
   final double opacity;
+  /// URL del sprite (puede ser local o remota). Si es null, usa la URL remota por defecto.
+  final String? spriteUrl;
 
   @override
   Widget build(BuildContext context) {
+    final imageSource = spriteUrl ?? PokemonSpriteUtils.getSpriteUrl(id);
+    
     return Opacity(
       opacity: opacity,
       child: InkWell(
@@ -47,15 +53,11 @@ class PokedexBookSpine extends StatelessWidget {
             const SizedBox(height: 16),
             Hero(
               tag: 'pokemon-artwork-$id',
-              child: Image.network(
-                PokemonSpriteUtils.getSpriteUrl(id),
+              child: PokemonSpriteImage(
+                imageSource: imageSource,
                 height: 60,
-                fit: BoxFit.contain,
-                errorBuilder: (c, e, s) => const Icon(
-                  Icons.catching_pokemon,
-                  size: 60,
-                  color: AppColors.mediumBrown,
-                ),
+                width: 60,
+                errorIconSize: 60,
               ),
             ),
             Expanded(

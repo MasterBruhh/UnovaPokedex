@@ -15,6 +15,9 @@ abstract class PokedexRepository {
   /// Obtiene el conteo total de Pokémon
   Future<int> getPokemonCount();
 
+  /// Obtiene TODOS los Pokémon sin paginación (para filtrado)
+  Future<List<Pokemon>> getAllPokemon();
+
   /// Obtiene información detallada para un Pokémon específico
   /// Se debe proporcionar [id] o [name]
   Future<PokemonDetail> getPokemonDetail({int? id, String? name});

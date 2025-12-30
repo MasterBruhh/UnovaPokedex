@@ -94,6 +94,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
                               pokemonName: pokemon.name,
                               pokemonTypes: pokemon.types,
                               region: region,
+                              spriteUrl: pokemon.spriteUrl,
                             );
                           },
                         ),
@@ -117,6 +118,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
                               pokemonName: pokemon.name,
                               pokemonTypes: pokemon.types,
                               region: region,
+                              spriteUrl: pokemon.spriteUrl,
                             );
                           },
                         ),
@@ -160,6 +162,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
     required String pokemonName,
     required List pokemonTypes,
     required PokemonRegion region,
+    String? spriteUrl,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -199,6 +202,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
                   types: pokemonTypes.cast(),
                   region: region,
                   opacity: opacity,
+                  spriteUrl: spriteUrl,
                   onTap: () => context.push(
                     '/pokedex/${Uri.encodeComponent(pokemonName)}',
                   ),
@@ -217,6 +221,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
     required String pokemonName,
     required List pokemonTypes,
     required PokemonRegion region,
+    String? spriteUrl,
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -255,6 +260,7 @@ class _FavoritesPageState extends ConsumerState<FavoritesPage> {
                   types: pokemonTypes.cast(),
                   region: region,
                   opacity: opacity,
+                  spriteUrl: spriteUrl,
                   onTap: () => context.push(
                     '/pokedex/${Uri.encodeComponent(pokemonName)}',
                   ),

@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:hive/hive.dart';
+import '../../../../core/utils/sprite_cache_service.dart';
 import '../../../pokedex/data/dto/pokemon_summary_dto.dart';
 import '../../../pokedex/domain/entities/pokemon.dart';
 
 class FavoritesLocalDatasource {
   static const String _boxName = 'favorites_box';
+  final SpriteCacheService _spriteCache = SpriteCacheService.instance;
 
   Future<Box> _openBox() async {
     if (!Hive.isBoxOpen(_boxName)) {
@@ -13,23 +15,42 @@ class FavoritesLocalDatasource {
     return Hive.box(_boxName);
   }
 
+  /// Guarda un Pokémon en favoritos con toda su información esencial:
+  /// - ID
+  /// - Nombre
+  /// - Tipos
+  /// - Sprite normal (descargado y guardado localmente)
+  /// - Sprite shiny (descargado y guardado localmente)
+  /// 
+  /// NO guarda: evoluciones, formas especiales, stats, movimientos, etc.
   Future<void> saveFavorite(Pokemon pokemon) async {
     final box = await _openBox();
-    // Convertimos a DTO para facilitar la serialización a JSON map
-    // Nota: Necesitarás agregar un método toJson al PokemonSummaryDto o hacerlo manual aquí
+    
+    // Descargar y cachear los sprites localmente
+    final sprites = await _spriteCache.cacheAllSprites(pokemon.id);
+    
+    // Guardamos la información esencial del Pokémon favorito
+    // con las rutas locales de los sprites
     final data = {
       'id': pokemon.id,
       'name': pokemon.name,
       'pokemon_v2_pokemontypes': pokemon.types.map((t) => {
         'pokemon_v2_type': {'name': t.name}
       }).toList(),
+      // Rutas locales de los sprites cacheados
+      'spriteUrl': sprites['sprite'],
+      'shinySpriteUrl': sprites['shiny'],
     };
+    
     await box.put(pokemon.id, jsonEncode(data));
   }
 
   Future<void> removeFavorite(int pokemonId) async {
     final box = await _openBox();
     await box.delete(pokemonId);
+    
+    // También eliminamos los sprites cacheados
+    await _spriteCache.deleteSprites(pokemonId);
   }
 
   Future<bool> isFavorite(int pokemonId) async {
@@ -45,7 +66,7 @@ class FavoritesLocalDatasource {
       final jsonString = box.get(key);
       if (jsonString != null) {
         final Map<String, dynamic> json = jsonDecode(jsonString);
-        // Reutilizamos tu DTO existente para convertir de JSON a Entity
+        // Convertimos el JSON guardado a entidad Pokemon con rutas locales de sprites
         favorites.add(PokemonSummaryDto.fromJson(json).toDomain());
       }
     }

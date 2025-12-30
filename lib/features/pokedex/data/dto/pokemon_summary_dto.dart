@@ -7,11 +7,15 @@ class PokemonSummaryDto {
     required this.id,
     required this.name,
     required this.types,
+    this.spriteUrl,
+    this.shinySpriteUrl,
   });
 
   final int id;
   final String name;
   final List<PokemonType> types;
+  final String? spriteUrl;
+  final String? shinySpriteUrl;
 
   /// Crea un DTO desde la respuesta JSON
   factory PokemonSummaryDto.fromJson(Map<String, dynamic> json) {
@@ -25,6 +29,8 @@ class PokemonSummaryDto {
       id: json['id'] as int,
       name: json['name'] as String,
       types: rawTypes,
+      spriteUrl: json['spriteUrl'] as String?,
+      shinySpriteUrl: json['shinySpriteUrl'] as String?,
     );
   }
 
@@ -34,6 +40,8 @@ class PokemonSummaryDto {
       id: id,
       name: name,
       types: types,
+      spriteUrl: spriteUrl,
+      shinySpriteUrl: shinySpriteUrl,
     );
   }
 }
